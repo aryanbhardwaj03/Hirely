@@ -1,0 +1,6 @@
+{
+  "name": "HIRELY",
+  "description": "Spatial AI-powered opportunity intelligence platform discovering personalized scholarships, internships, hackathons, and fellowships for students via TinyFish web agents.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
