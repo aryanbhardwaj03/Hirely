@@ -1,6 +1,7 @@
 import logging
 from typing import List, Dict, Any, Optional
 import httpx
+from tinyfish import AsyncTinyFish
 from app.core.config import settings
 from app.data.mock_opportunities import MOCK_OPPORTUNITIES
 
@@ -24,11 +25,21 @@ class TinyFishClient:
 
     def __init__(self):
         self.api_key = settings.TINYFISH_API_KEY.strip() if settings.TINYFISH_API_KEY else None
+        self.has_key = bool(self.api_key)
+        self.sdk_client: Optional[AsyncTinyFish] = None
+
+        if self.has_key:
+            try:
+                self.sdk_client = AsyncTinyFish(api_key=self.api_key)
+                logger.info("TinyFish SDK initialized with live API key.")
+            except Exception as e:
+                logger.error(f"Failed to initialize TinyFish SDK client: {e}")
+
         self.headers = {
             "X-API-Key": self.api_key or "",
             "Content-Type": "application/json"
         }
-        self.has_key = bool(self.api_key)
+
         if not self.has_key:
             logger.info("TinyFish API key not detected. Smart Mock & Fallback mode is ACTIVE.")
 
@@ -44,6 +55,20 @@ class TinyFishClient:
         Executes a web search via TinyFish Search API.
         Falls back to local mock search if key is not configured or on network error.
         """
+        if self.has_key and self.sdk_client:
+            try:
+                search_res = await self.sdk_client.search.query(
+                    query=query,
+                    purpose=purpose,
+                    location=location,
+                    recency_minutes=recency_minutes
+                )
+                if search_res and search_res.results:
+                    return self._format_sdk_results(search_res.results, query)
+            except Exception as e:
+                logger.error(f"TinyFish SDK Search error: {e}. Falling back to curated dataset.")
+
+        # HTTP Fallback
         if self.has_key:
             try:
                 async with httpx.AsyncClient(timeout=15.0) as client:
@@ -60,25 +85,32 @@ class TinyFishClient:
                         headers=self.headers,
                         params=params
                     )
-                    
                     if resp.status_code == 200:
                         data = resp.json()
                         results = data.get("results", [])
-                        return self._format_tinyfish_results(results, query)
-                    else:
-                        logger.warning(
-                            f"TinyFish Search API returned HTTP {resp.status_code}: {resp.text}. Falling back to curated dataset."
-                        )
+                        return self._format_raw_results(results, query)
             except Exception as e:
-                logger.error(f"TinyFish Search error: {e}. Falling back to curated dataset.")
+                logger.error(f"TinyFish HTTP Search fallback error: {e}")
 
-        # Fallback / Demo mode
+        # Smart Curated Fallback
         return self._filter_mock_data(query=query, location=location, limit=limit)
 
     async def fetch_content(self, url: str, purpose: Optional[str] = None) -> Optional[str]:
         """
         Extracts clean, agent-ready markdown text from any web page using TinyFish Fetch API.
         """
+        if self.has_key and self.sdk_client:
+            try:
+                fetch_res = await self.sdk_client.fetch.get_contents(
+                    urls=[url],
+                    purpose=purpose,
+                    format="markdown"
+                )
+                if fetch_res and fetch_res.results:
+                    return fetch_res.results[0].text
+            except Exception as e:
+                logger.error(f"TinyFish SDK Fetch error for {url}: {e}")
+
         if self.has_key:
             try:
                 async with httpx.AsyncClient(timeout=30.0) as client:
@@ -100,11 +132,11 @@ class TinyFishClient:
                         data = resp.json()
                         results = data.get("results", [])
                         if results and len(results) > 0:
-                            return results[0].get("content") or results[0].get("markdown")
+                            return results[0].get("text") or results[0].get("content") or results[0].get("markdown")
             except Exception as e:
-                logger.error(f"TinyFish Fetch error for {url}: {e}")
+                logger.error(f"TinyFish HTTP Fetch error for {url}: {e}")
 
-        # Fallback: check if URL matches any mock opportunity
+        # Mock fallback: check if URL matches any mock opportunity
         for item in MOCK_OPPORTUNITIES:
             if item["url"] == url or item["id"] in url:
                 return f"# {item['title']} at {item['organization']}\n\n**Location:** {item['location']}\n**Type:** {item['type']}\n**Compensation:** {item.get('compensation', 'N/A')}\n\n## Description\n{item['description']}\n\n## Required Skills\n" + ", ".join(item.get("key_skills", []))
@@ -120,6 +152,18 @@ class TinyFishClient:
         """
         Runs an autonomous web agent task using TinyFish Agent API.
         """
+        if self.has_key and self.sdk_client:
+            try:
+                run_res = await self.sdk_client.agent.run(
+                    goal=goal,
+                    url=url,
+                    output_schema=output_schema
+                )
+                if run_res:
+                    return run_res.result
+            except Exception as e:
+                logger.error(f"TinyFish SDK Agent run error: {e}")
+
         if self.has_key:
             try:
                 async with httpx.AsyncClient(timeout=45.0) as client:
@@ -138,12 +182,51 @@ class TinyFishClient:
                     if resp.status_code in (200, 201):
                         return resp.json().get("result")
             except Exception as e:
-                logger.error(f"TinyFish Agent run error: {e}")
+                logger.error(f"TinyFish HTTP Agent run error: {e}")
 
         return None
 
-    def _format_tinyfish_results(self, raw_results: List[Dict[str, Any]], query: str) -> List[Dict[str, Any]]:
-        """Formats TinyFish raw search results into standard Opportunity objects."""
+    def _format_sdk_results(self, sdk_results: List[Any], query: str) -> List[Dict[str, Any]]:
+        """Formats TinyFish SDK SearchResult objects into standard Opportunity dictionaries."""
+        formatted = []
+        q_lower = query.lower()
+        default_type = "hackathon" if "hackathon" in q_lower else ("internship" if "intern" in q_lower else "job")
+
+        for idx, res in enumerate(sdk_results):
+            title = getattr(res, "title", None) or "Opportunity"
+            url = getattr(res, "url", None) or "https://example.com"
+            snippet = getattr(res, "snippet", None) or ""
+            site_name = getattr(res, "site_name", None) or "Web Discovery"
+
+            item_type = default_type
+            title_lower = title.lower()
+            if "hackathon" in title_lower or "challenge" in title_lower:
+                item_type = "hackathon"
+            elif "intern" in title_lower or "fellow" in title_lower:
+                item_type = "internship"
+
+            skills = self._extract_skills_from_text(f"{title} {snippet}")
+
+            formatted.append({
+                "id": f"tinyfish-live-{idx}-{abs(hash(url)) % 100000}",
+                "type": item_type,
+                "title": title,
+                "organization": site_name,
+                "location": "Remote / Listed on Site",
+                "is_remote": "remote" in snippet.lower() or "remote" in title_lower,
+                "url": url,
+                "description": snippet if snippet else f"Live {item_type} opportunity found on {site_name}.",
+                "summary": snippet[:200] + ("..." if len(snippet) > 200 else "") if snippet else f"{title} on {site_name}",
+                "key_skills": skills,
+                "experience_level": "Student" if item_type != "job" else "Entry-Level",
+                "compensation": "Refer to official posting",
+                "deadline": "See official site",
+                "source": "TinyFish Live Search"
+            })
+        return formatted
+
+    def _format_raw_results(self, raw_results: List[Dict[str, Any]], query: str) -> List[Dict[str, Any]]:
+        """Formats raw dict search results."""
         formatted = []
         q_lower = query.lower()
         default_type = "hackathon" if "hackathon" in q_lower else ("internship" if "intern" in q_lower else "job")
@@ -154,7 +237,6 @@ class TinyFishClient:
             snippet = res.get("snippet") or ""
             site_name = res.get("site_name") or "Web Discovery"
 
-            # Determine type
             item_type = default_type
             title_lower = title.lower()
             if "hackathon" in title_lower or "challenge" in title_lower:
@@ -162,7 +244,6 @@ class TinyFishClient:
             elif "intern" in title_lower or "fellow" in title_lower:
                 item_type = "internship"
 
-            # Extract basic skills mentioned in snippet
             skills = self._extract_skills_from_text(f"{title} {snippet}")
 
             formatted.append({
