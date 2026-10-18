@@ -15,13 +15,13 @@ export const EmailAutomationCard: React.FC = () => {
       <div>
         <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] mb-3">
           <div className="flex items-center gap-2">
-            <Mail className="w-4 h-4 text-[#00E676]" />
+            <Mail className="w-4 h-4 text-[#5DD62C]" />
             <h3 className="text-xs font-semibold uppercase tracking-wider text-white">
               Email Automation
             </h3>
           </div>
-          <span className="font-mono text-[11px] text-[#00E676] bg-[#00E676]/10 px-2.5 py-0.5 rounded-full border border-[#00E676]/30 font-semibold">
-            AUTONOMOUS
+          <span className="font-mono text-[10px] text-[#5DD62C] bg-[#5DD62C]/10 px-2.5 py-0.5 rounded-full border border-[#5DD62C]/30 font-semibold" title="SMTP Backend contract pending deployment by teammate">
+            SMTP PRIMED
           </span>
         </div>
 
@@ -50,7 +50,7 @@ export const EmailAutomationCard: React.FC = () => {
           {/* Toggle for Deadline Reminders */}
           <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/[0.08]">
             <div className="flex items-center gap-2">
-              <BellRing className="w-4 h-4 text-[#00E676]" />
+              <BellRing className="w-4 h-4 text-[#5DD62C]" />
               <span className="text-xs text-slate-200 font-medium">
                 Automated 7-day deadline alerts
               </span>
@@ -58,7 +58,7 @@ export const EmailAutomationCard: React.FC = () => {
             <button
               onClick={() => updateEmailConfig({ sendDeadlineAlerts: !emailConfig.sendDeadlineAlerts })}
               className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer ${
-                emailConfig.sendDeadlineAlerts ? 'bg-[#00E676]' : 'bg-white/10'
+                emailConfig.sendDeadlineAlerts ? 'bg-[#5DD62C]' : 'bg-white/10'
               }`}
               aria-label="Toggle deadline alerts"
             >
@@ -79,7 +79,7 @@ export const EmailAutomationCard: React.FC = () => {
         </span>
         <button
           onClick={() => setIsEmailPreviewOpen(true)}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] text-xs font-semibold text-[#00E676] transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] text-xs font-semibold text-[#5DD62C] transition-colors cursor-pointer"
         >
           <Eye className="w-4 h-4" />
           <span>Preview Digest</span>

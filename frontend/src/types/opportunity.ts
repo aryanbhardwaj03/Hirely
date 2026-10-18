@@ -8,6 +8,21 @@ export type OpportunityCategory =
 
 export type EligibilityStatus = 'verified' | 'eligible' | 'unknown' | 'ineligible';
 
+export type WorkArrangement = 'Remote' | 'Hybrid' | 'On-site' | 'Unverified';
+
+export type OpportunitySortOption =
+  | 'newest'
+  | 'highest_paying'
+  | 'nearest'
+  | 'best_match'
+  | 'deadline_soonest';
+
+export type LocationScope =
+  | 'all'
+  | 'delhi_ncr'
+  | 'india'
+  | 'remote_worldwide';
+
 export interface Opportunity {
   id: string;
   title: string;
@@ -19,7 +34,10 @@ export interface Opportunity {
   daysLeft: number | null;
   eligibility: string;
   location: string;
+  city?: string;
+  country?: string;
   isRemote: boolean;
+  workArrangement: WorkArrangement;
   description: string;
   required_skills: string[];
   match_score: number;
@@ -27,8 +45,14 @@ export interface Opportunity {
   missing_requirements: string[];
   eligibility_status: EligibilityStatus;
   last_checked_at: string;
+  postedDate?: string;
   stipendOrAward: string;
+  compensationNumeric?: number;
   source: string;
+  sourcePlatform?: string;
+  sourceDomain?: string;
+  isSourceVerified?: boolean;
+  isDemoFallback?: boolean;
   isTopMatch?: boolean;
 }
 
@@ -76,4 +100,12 @@ export interface EmailDigestConfig {
   sendDeadlineAlerts: boolean;
   lastSentAt: string | null;
   nextScheduledAt: string;
+}
+
+export interface AuthUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  isAnonymous?: boolean;
 }

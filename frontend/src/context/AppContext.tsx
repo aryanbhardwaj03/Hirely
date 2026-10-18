@@ -5,27 +5,33 @@ import {
   ApplicationItem, 
   ApplicationColumnId, 
   EmailDigestConfig, 
-  OpportunityCategory 
+  OpportunityCategory,
+  OpportunitySortOption,
+  LocationScope,
+  AuthUser
 } from '../types/opportunity';
-import { 
-  INITIAL_PROFILE, 
-  INITIAL_OPPORTUNITIES, 
-  INITIAL_APPLICATIONS, 
-  INITIAL_EMAIL_CONFIG 
+import {
+  INITIAL_PROFILE,
+  INITIAL_OPPORTUNITIES,
+  INITIAL_APPLICATIONS,
+  INITIAL_EMAIL_CONFIG
 } from '../data/opportunities';
-import { 
-  checkBackendHealth, 
-  discoverOpportunities, 
-  BackendHealthResponse 
+import {
+  checkBackendHealth,
+  discoverOpportunities,
+  BackendHealthResponse
 } from '../services/tinyfish';
 import { scheduleEmailNotification } from '../services/email';
-import { 
-  fetchBackendHealth, 
-  getBackendRecommendations, 
-  saveOpportunityToTracker,
-  updateTrackerStatus as apiUpdateTrackerStatus,
-  BackendHealth 
+import {
+  fetchBackendHealth,
+  getBackendRecommendations,
+  BackendHealth
 } from '../services/api';
+import {
+  subscribeToAuthChanges,
+  logoutUser,
+  getCurrentAuthToken
+} from '../services/firebase';
 
 export interface ToastMessage {
   id: string;
@@ -33,9 +39,16 @@ export interface ToastMessage {
   type?: 'info' | 'success' | 'warning';
 }
 
+export type ActiveTabType = 'dashboard' | 'discover' | 'assistant' | 'tracker' | 'profile' | 'settings' | 'notfound';
+
 interface AppContextType {
-  activeTab: 'dashboard' | 'discover' | 'tracker' | 'profile' | 'settings';
-  setActiveTab: (tab: 'dashboard' | 'discover' | 'tracker' | 'profile' | 'settings') => void;
+  activeTab: ActiveTabType;
+  setActiveTab: (tab: ActiveTabType) => void;
+  currentUser: AuthUser | null;
+  setCurrentUser: (user: AuthUser | null) => void;
+  authToken: string | null;
+  setAuthToken: (token: string | null) => void;
+  logout: () => Promise<void>;
   profile: StudentProfile;
   updateProfile: (updated: Partial<StudentProfile>) => void;
   opportunities: Opportunity[];
@@ -55,6 +68,10 @@ interface AppContextType {
   fastapiHealth: BackendHealth | null;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  sortBy: OpportunitySortOption;
+  setSortBy: (sort: OpportunitySortOption) => void;
+  locationScope: LocationScope;
+  setLocationScope: (scope: LocationScope) => void;
   radarFilters: {
     scholarships: boolean;
     internships: boolean;
@@ -72,8 +89,12 @@ interface AppContextType {
   setIsEmailPreviewOpen: (open: boolean) => void;
   isDiscoveryModalOpen: boolean;
   setIsDiscoveryModalOpen: (open: boolean) => void;
+  isHirelyCoreOpen: boolean;
+  setIsHirelyCoreOpen: (open: boolean) => void;
   sidebarCollapsed: boolean;
   setSidebarCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+  isMobileMenuOpen: boolean;
+  setIsMobileMenuOpen: (open: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -84,8 +105,18 @@ const STORAGE_KEY_APPLICATIONS = 'hirely_applications_v1';
 const STORAGE_KEY_EMAIL = 'hirely_email_config_v1';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'discover' | 'tracker' | 'profile' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<ActiveTabType>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isHirelyCoreOpen, setIsHirelyCoreOpen] = useState(false);
+
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
+
+  // Sorting and Filtering State
+  const [sortBy, setSortBy] = useState<OpportunitySortOption>('newest');
+  const [locationScope, setLocationScope] = useState<LocationScope>('delhi_ncr');
 
   // Profile State
   const [profile, setProfile] = useState<StudentProfile>(() => {
@@ -104,9 +135,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [savedOpportunityIds, setSavedOpportunityIds] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY_SAVED);
-      return stored ? JSON.parse(stored) : ['opp-1', 'opp-3', 'opp-5'];
+      return stored ? JSON.parse(stored) : ['opp-1', 'opp-delhi-1', 'opp-3'];
     } catch {
-      return ['opp-1', 'opp-3', 'opp-5'];
+      return ['opp-1', 'opp-delhi-1', 'opp-3'];
     }
   });
 
@@ -148,6 +179,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     remoteOnly: false,
   });
 
+  // Toast dispatch
+  const showToast = useCallback((message: string, type: 'info' | 'success' | 'warning' = 'success') => {
+    const id = `${Date.now()}-${Math.random()}`;
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4000);
+  }, []);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  // Listen to Firebase / Demo auth state on startup
+  useEffect(() => {
+    const unsubscribe = subscribeToAuthChanges((user, token) => {
+      setCurrentUser(user);
+      setAuthToken(token);
+      if (user?.displayName && !profile.name) {
+        setProfile(prev => ({ ...prev, name: user.displayName || prev.name, email: user.email || prev.email }));
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   // Check backend health on mount
   useEffect(() => {
     checkBackendHealth().then((health) => {
@@ -156,7 +212,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     fetchBackendHealth().then((health) => {
       setFastapiHealth(health);
       if (health.is_connected) {
-        // Attempt to fetch recommendations directly from FastAPI backend
         getBackendRecommendations(profile).then((rec) => {
           if (rec.isLive && rec.opportunities.length > 0) {
             setOpportunities(rec.opportunities);
@@ -166,7 +221,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   }, []);
 
-  // Sync to localStorage
+  // Sync state to localStorage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(profile));
   }, [profile]);
@@ -183,18 +238,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem(STORAGE_KEY_EMAIL, JSON.stringify(emailConfig));
   }, [emailConfig]);
 
-  // Toast dispatch
-  const showToast = useCallback((message: string, type: 'info' | 'success' | 'warning' = 'success') => {
-    const id = `${Date.now()}-${Math.random()}`;
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, 4000);
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
+  // Logout handler
+  const logout = useCallback(async () => {
+    await logoutUser();
+    setCurrentUser(null);
+    setAuthToken(null);
+    showToast('Signed out of Hirely session.', 'info');
+  }, [showToast]);
 
   // Profile update
   const updateProfile = useCallback((updated: Partial<StudentProfile>) => {
@@ -279,7 +329,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsDiscoveryModalOpen(true);
     try {
       const categoriesToScan = customCategories || profile.preferredCategories;
-      
+
       // If live backend is connected, fetch recommendations from API
       if (fastapiHealth?.is_connected) {
         const rec = await getBackendRecommendations(profile);
@@ -290,7 +340,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       }
 
-      // Otherwise run simulated autonomous pipeline
+      // Autonomous pipeline
       const res = await discoverOpportunities(
         profile,
         categoriesToScan,
@@ -320,6 +370,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const value = useMemo(() => ({
     activeTab,
     setActiveTab,
+    currentUser,
+    setCurrentUser,
+    authToken,
+    setAuthToken,
+    logout,
     profile,
     updateProfile,
     opportunities,
@@ -339,6 +394,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     fastapiHealth,
     searchQuery,
     setSearchQuery,
+    sortBy,
+    setSortBy,
+    locationScope,
+    setLocationScope,
     radarFilters,
     setRadarFilters,
     toasts,
@@ -348,10 +407,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsEmailPreviewOpen,
     isDiscoveryModalOpen,
     setIsDiscoveryModalOpen,
+    isHirelyCoreOpen,
+    setIsHirelyCoreOpen,
     sidebarCollapsed,
     setSidebarCollapsed,
+    isMobileMenuOpen,
+    setIsMobileMenuOpen,
   }), [
     activeTab,
+    currentUser,
+    authToken,
+    logout,
     profile,
     updateProfile,
     opportunities,
@@ -369,13 +435,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     backendHealth,
     fastapiHealth,
     searchQuery,
+    sortBy,
+    locationScope,
     radarFilters,
     toasts,
     showToast,
     removeToast,
     isEmailPreviewOpen,
     isDiscoveryModalOpen,
+    isHirelyCoreOpen,
     sidebarCollapsed,
+    isMobileMenuOpen,
   ]);
 
   return (

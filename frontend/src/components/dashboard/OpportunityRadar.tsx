@@ -70,12 +70,12 @@ export const OpportunityRadar: React.FC = () => {
       <div>
         <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
           <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#00E676] shadow-[0_0_10px_#00E676]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#5DD62C] shadow-[0_0_10px_#5DD62C]" />
             <h2 className="text-sm font-semibold tracking-wide text-white uppercase">
               Radar Command Center
             </h2>
           </div>
-          <span className="font-mono text-[11px] text-[#00E676] bg-[#00E676]/10 px-2.5 py-0.5 rounded-full border border-[#00E676]/30 font-medium">
+          <span className="font-mono text-[11px] text-[#5DD62C] bg-[#5DD62C]/10 px-2.5 py-0.5 rounded-full border border-[#5DD62C]/30 font-medium">
             360° LIVE SWEEP
           </span>
         </div>
@@ -83,15 +83,15 @@ export const OpportunityRadar: React.FC = () => {
         {/* Big Animated SVG Radar with Halo & Floating Chips (~300px) */}
         <div className="relative w-[300px] h-[300px] mx-auto my-4 flex items-center justify-center select-none">
           {/* Soft Green Ambient Glow Halo */}
-          <div className="absolute inset-4 rounded-full bg-[#00E676]/10 blur-[45px] pointer-events-none" />
+          <div className="absolute inset-4 rounded-full bg-[#5DD62C]/10 blur-[45px] pointer-events-none" />
 
           {/* SVG Canvas */}
           <svg className="w-full h-full overflow-visible" viewBox="0 0 300 300">
             <defs>
               {/* Radial gradient for sweep cone */}
               <radialGradient id="radarSweepGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#00E676" stopOpacity="0.35" />
-                <stop offset="100%" stopColor="#00E676" stopOpacity="0" />
+                <stop offset="0%" stopColor="#5DD62C" stopOpacity="0.35" />
+                <stop offset="100%" stopColor="#5DD62C" stopOpacity="0" />
               </radialGradient>
             </defs>
 
@@ -101,20 +101,20 @@ export const OpportunityRadar: React.FC = () => {
               cy="150"
               r="144"
               fill="none"
-              stroke="#00E676"
+              stroke="#5DD62C"
               strokeWidth="1.2"
               className="animate-radar-pulse-ring"
             />
 
             {/* 4-5 Concentric Circles with Decreasing Opacity */}
-            <circle cx="150" cy="150" r="136" fill="none" stroke="#00E676" strokeOpacity="0.25" strokeWidth="1" />
-            <circle cx="150" cy="150" r="102" fill="none" stroke="#00E676" strokeOpacity="0.2" strokeWidth="1" strokeDasharray="4 3" />
-            <circle cx="150" cy="150" r="68" fill="none" stroke="#00E676" strokeOpacity="0.28" strokeWidth="1" />
-            <circle cx="150" cy="150" r="34" fill="none" stroke="#00E676" strokeOpacity="0.35" strokeWidth="1.2" />
+            <circle cx="150" cy="150" r="136" fill="none" stroke="#5DD62C" strokeOpacity="0.25" strokeWidth="1" />
+            <circle cx="150" cy="150" r="102" fill="none" stroke="#5DD62C" strokeOpacity="0.2" strokeWidth="1" strokeDasharray="4 3" />
+            <circle cx="150" cy="150" r="68" fill="none" stroke="#5DD62C" strokeOpacity="0.28" strokeWidth="1" />
+            <circle cx="150" cy="150" r="34" fill="none" stroke="#5DD62C" strokeOpacity="0.35" strokeWidth="1.2" />
 
             {/* Crosshair Lines */}
-            <line x1="150" y1="12" x2="150" y2="288" stroke="#00E676" strokeOpacity="0.16" strokeWidth="1" />
-            <line x1="12" y1="150" x2="288" y2="150" stroke="#00E676" strokeOpacity="0.16" strokeWidth="1" />
+            <line x1="150" y1="12" x2="150" y2="288" stroke="#5DD62C" strokeOpacity="0.16" strokeWidth="1" />
+            <line x1="12" y1="150" x2="288" y2="150" stroke="#5DD62C" strokeOpacity="0.16" strokeWidth="1" />
 
             {/* Diagonal Target Lines */}
             <line x1="45" y1="45" x2="255" y2="255" stroke="rgba(255,255,255,0.05)" strokeWidth="0.8" strokeDasharray="3 4" />
@@ -128,14 +128,14 @@ export const OpportunityRadar: React.FC = () => {
                 y1={tick.y1}
                 x2={tick.x2}
                 y2={tick.y2}
-                stroke="#00E676"
+                stroke="#5DD62C"
                 strokeOpacity={idx % 4 === 0 ? '0.7' : '0.3'}
                 strokeWidth={idx % 4 === 0 ? '1.5' : '1'}
               />
             ))}
 
             {/* Center Compass Point */}
-            <circle cx="150" cy="150" r="5" fill="#00E676" className="shadow-[0_0_12px_#00E676]" />
+            <circle cx="150" cy="150" r="5" fill="#5DD62C" className="shadow-[0_0_12px_#5DD62C]" />
             <circle cx="150" cy="150" r="2" fill="#FFFFFF" />
 
             {/* Connecting Lines to Floating Chips */}
@@ -143,7 +143,7 @@ export const OpportunityRadar: React.FC = () => {
             <polyline
               points="150,150 70,55 35,55"
               fill="none"
-              stroke="#00E676"
+              stroke="#5DD62C"
               strokeOpacity="0.4"
               strokeWidth="1"
               strokeDasharray="2 2"
@@ -152,7 +152,7 @@ export const OpportunityRadar: React.FC = () => {
             <polyline
               points="150,150 230,55 265,55"
               fill="none"
-              stroke="#00E676"
+              stroke="#5DD62C"
               strokeOpacity="0.4"
               strokeWidth="1"
               strokeDasharray="2 2"
@@ -161,7 +161,7 @@ export const OpportunityRadar: React.FC = () => {
             <polyline
               points="150,150 150,265"
               fill="none"
-              stroke="#00E676"
+              stroke="#5DD62C"
               strokeOpacity="0.4"
               strokeWidth="1"
               strokeDasharray="2 2"
@@ -172,7 +172,7 @@ export const OpportunityRadar: React.FC = () => {
               const opp = opportunities[blip.oppIndex];
               if (!opp) return null;
               const isHovered = hoveredOppId === opp.id;
-              const isHighlighted = !activeFilterPill || 
+              const isHighlighted = !activeFilterPill ||
                 (activeFilterPill === 'match' && opp.match_score >= 93) ||
                 (activeFilterPill === 'location' && opp.isRemote) ||
                 (activeFilterPill === 'skills' && opp.required_skills.includes('Python'));
@@ -190,7 +190,7 @@ export const OpportunityRadar: React.FC = () => {
                     cx={blip.cx}
                     cy={blip.cy}
                     r={isHovered ? 12 : 7}
-                    fill="#00E676"
+                    fill="#5DD62C"
                     fillOpacity={isHovered ? 0.45 : isHighlighted ? 0.2 : 0.08}
                     className="transition-all duration-200"
                   />
@@ -199,7 +199,7 @@ export const OpportunityRadar: React.FC = () => {
                     cx={blip.cx}
                     cy={blip.cy}
                     r={isHovered ? 4.5 : isHighlighted ? 3.5 : 2.5}
-                    fill={isHovered ? '#FFFFFF' : '#00E676'}
+                    fill={isHovered ? '#FFFFFF' : '#5DD62C'}
                     className="transition-all duration-150"
                   />
                 </g>
@@ -217,7 +217,7 @@ export const OpportunityRadar: React.FC = () => {
               }}
             />
             {/* Luminous Leading Edge Line */}
-            <div className="absolute top-1/2 left-1/2 w-1/2 h-[1.5px] origin-left bg-gradient-to-r from-transparent via-[#00E676] to-[#FFFFFF] shadow-[0_0_10px_#00E676]" />
+            <div className="absolute top-1/2 left-1/2 w-1/2 h-[1.5px] origin-left bg-gradient-to-r from-transparent via-[#5DD62C] to-[#FFFFFF] shadow-[0_0_10px_#5DD62C]" />
           </div>
 
           {/* Floating Filter Labels as glass chips around the radar */}
@@ -226,8 +226,8 @@ export const OpportunityRadar: React.FC = () => {
             onClick={() => handlePillClick('match')}
             className={`absolute top-1 left-0 -translate-x-2 px-2.5 py-1 rounded-lg text-[10px] font-mono tracking-wider transition-all cursor-pointer shadow-lg z-20 ${
               activeFilterPill === 'match'
-                ? 'bg-[#00E676] text-black font-bold shadow-[0_0_15px_#00E676]'
-                : 'bg-[#090E0B]/90 text-slate-200 border border-white/[0.12] hover:border-[#00E676]/50'
+                ? 'bg-[#5DD62C] text-black font-bold shadow-[0_0_15px_#5DD62C]'
+                : 'bg-[#090E0B]/90 text-slate-200 border border-white/[0.12] hover:border-[#5DD62C]/50'
             }`}
           >
             Match 90%+
@@ -238,8 +238,8 @@ export const OpportunityRadar: React.FC = () => {
             onClick={() => handlePillClick('skills')}
             className={`absolute top-1 right-0 translate-x-2 px-2.5 py-1 rounded-lg text-[10px] font-mono tracking-wider transition-all cursor-pointer shadow-lg z-20 ${
               activeFilterPill === 'skills'
-                ? 'bg-[#00E676] text-black font-bold shadow-[0_0_15px_#00E676]'
-                : 'bg-[#090E0B]/90 text-slate-200 border border-white/[0.12] hover:border-[#00E676]/50'
+                ? 'bg-[#5DD62C] text-black font-bold shadow-[0_0_15px_#5DD62C]'
+                : 'bg-[#090E0B]/90 text-slate-200 border border-white/[0.12] hover:border-[#5DD62C]/50'
             }`}
           >
             Python / AI
@@ -250,8 +250,8 @@ export const OpportunityRadar: React.FC = () => {
             onClick={() => handlePillClick('location')}
             className={`absolute bottom-0 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg text-[10px] font-mono tracking-wider transition-all cursor-pointer shadow-lg z-20 ${
               activeFilterPill === 'location'
-                ? 'bg-[#00E676] text-black font-bold shadow-[0_0_15px_#00E676]'
-                : 'bg-[#090E0B]/90 text-slate-200 border border-white/[0.12] hover:border-[#00E676]/50'
+                ? 'bg-[#5DD62C] text-black font-bold shadow-[0_0_15px_#5DD62C]'
+                : 'bg-[#090E0B]/90 text-slate-200 border border-white/[0.12] hover:border-[#5DD62C]/50'
             }`}
           >
             Remote Active
@@ -264,9 +264,9 @@ export const OpportunityRadar: React.FC = () => {
                 initial={{ opacity: 0, scale: 0.9, y: 5 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 5 }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3.5 py-2 rounded-xl bg-[#090E0B]/95 border border-[#00E676]/50 shadow-2xl text-center pointer-events-none z-30 max-w-[210px]"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3.5 py-2 rounded-xl bg-[#090E0B]/95 border border-[#5DD62C]/50 shadow-2xl text-center pointer-events-none z-30 max-w-[210px]"
               >
-                <div className="font-mono text-xs text-[#00E676] font-bold">
+                <div className="font-mono text-xs text-[#5DD62C] font-bold">
                   {activeOpp.match_score}% MATCH
                 </div>
                 <div className="text-xs font-semibold text-white truncate mt-0.5">
@@ -287,7 +287,7 @@ export const OpportunityRadar: React.FC = () => {
             <button
               onClick={() => toggleFilter('scholarships')}
               className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer ${
-                radarFilters.scholarships ? 'bg-[#00E676]' : 'bg-white/10'
+                radarFilters.scholarships ? 'bg-[#5DD62C]' : 'bg-white/10'
               }`}
               aria-label="Toggle scholarships filter"
             >
@@ -304,7 +304,7 @@ export const OpportunityRadar: React.FC = () => {
             <button
               onClick={() => toggleFilter('internships')}
               className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer ${
-                radarFilters.internships ? 'bg-[#00E676]' : 'bg-white/10'
+                radarFilters.internships ? 'bg-[#5DD62C]' : 'bg-white/10'
               }`}
               aria-label="Toggle internships filter"
             >
@@ -321,7 +321,7 @@ export const OpportunityRadar: React.FC = () => {
             <button
               onClick={() => toggleFilter('remoteOnly')}
               className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer ${
-                radarFilters.remoteOnly ? 'bg-[#00E676]' : 'bg-white/10'
+                radarFilters.remoteOnly ? 'bg-[#5DD62C]' : 'bg-white/10'
               }`}
               aria-label="Toggle remote only filter"
             >
@@ -339,7 +339,7 @@ export const OpportunityRadar: React.FC = () => {
       <div className="space-y-3 pt-3 border-t border-white/[0.08]">
         <div className="grid grid-cols-2 gap-2 text-center">
           <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08]">
-            <div className="font-mono text-sm font-bold text-[#00E676] tabular-nums">
+            <div className="font-mono text-sm font-bold text-[#5DD62C] tabular-nums">
               +96%
             </div>
             <div className="font-mono text-[11px] uppercase tracking-wider text-slate-300 mt-0.5 font-medium">
@@ -359,7 +359,7 @@ export const OpportunityRadar: React.FC = () => {
         <button
           onClick={() => runDiscovery()}
           disabled={isDiscovering}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#00E676]/20 hover:bg-[#00E676]/30 border border-[#00E676]/50 text-[#00E676] text-xs font-bold tracking-wide transition-all shadow-[0_0_25px_rgba(0,230,118,0.18)] cursor-pointer disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#5DD62C]/20 hover:bg-[#5DD62C]/30 border border-[#5DD62C]/50 text-[#5DD62C] text-xs font-bold tracking-wide transition-all shadow-[0_0_25px_rgba(0,230,118,0.18)] cursor-pointer disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${isDiscovering ? 'animate-spin' : ''}`} />
           <span>{isDiscovering ? 'Scanning Web Agents...' : 'Run Live Discovery'}</span>

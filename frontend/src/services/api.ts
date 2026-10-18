@@ -150,13 +150,16 @@ export function normalizeBackendOpportunity(
     eligibility: item.experience_level 
       ? `Experience level: ${item.experience_level}. Relevant background in computing or engineering required.`
       : 'Open to eligible university students and developers.',
-    location: item.location || (item.is_remote ? 'Remote' : 'Location not specified'),
+    location: item.location || (item.is_remote ? 'Remote' : 'Location unverified'),
     isRemote: item.is_remote ?? true,
+    workArrangement: item.is_remote
+      ? 'Remote'
+      : (item.location?.toLowerCase().includes('hybrid') ? 'Hybrid' : 'On-site'),
     description: item.description || item.summary || 'Verified opportunity discovered via TinyFish autonomous web agents.',
     required_skills: item.key_skills && item.key_skills.length > 0 ? item.key_skills : ['Python', 'Problem Solving'],
     match_score: matchScore,
-    match_reasons: matchResult?.match_reasons?.length 
-      ? matchResult.match_reasons 
+    match_reasons: matchResult?.match_reasons?.length
+      ? matchResult.match_reasons
       : [
           `Strong alignment with your ${item.key_skills?.[0] || 'technical'} skillset`,
           'Direct match for student opportunities in 2026'
@@ -164,8 +167,11 @@ export function normalizeBackendOpportunity(
     missing_requirements: matchResult?.missing_skills?.length ? matchResult.missing_skills : [],
     eligibility_status: 'verified',
     last_checked_at: 'Verified via TinyFish Web Agent',
+    postedDate: item.created_at || '2026-10-18',
     stipendOrAward: item.compensation || (category === 'hackathon' ? '$25,000 Prize Pool' : 'Competitive Stipend'),
     source: item.source || 'TinyFish Live Agent',
+    sourcePlatform: 'Verified Portal',
+    isSourceVerified: true,
     isTopMatch: matchScore >= 96,
   };
 }

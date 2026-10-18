@@ -29,7 +29,8 @@ export const OpportunityDetailDrawer: React.FC = () => {
     isOpportunitySaved,
     applications,
     updateApplicationStatus,
-    profile 
+    profile,
+    setIsHirelyCoreOpen
   } = useApp();
 
   const [aiSummary, setAiSummary] = useState<BackendSummaryResponse | null>(null);
@@ -119,13 +120,13 @@ export const OpportunityDetailDrawer: React.FC = () => {
           className="relative w-full max-w-xl h-full bg-[#050A08] border-l border-white/[0.12] shadow-2xl z-50 flex flex-col justify-between overflow-y-auto"
         >
           {/* Top Edge Highlight */}
-          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#00E676]/50 to-transparent pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#5DD62C]/50 to-transparent pointer-events-none" />
 
           {/* Drawer Header */}
           <div className="p-6 border-b border-white/[0.08] sticky top-0 bg-[#050A08]/95 backdrop-blur-xl z-20 flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider bg-[#00E676]/15 border border-[#00E676]/30 text-[#00E676] font-semibold">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider bg-[#5DD62C]/15 border border-[#5DD62C]/30 text-[#5DD62C] font-semibold">
                   {selectedOpportunity.category}
                 </span>
                 <span className="font-mono text-[11px] text-slate-300">
@@ -152,15 +153,15 @@ export const OpportunityDetailDrawer: React.FC = () => {
           {/* Drawer Body Content */}
           <div className="p-6 space-y-6 flex-1">
             {/* Match Intelligence Banner */}
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-[#122A14] to-[#0A160D] border border-[#00E676]/40 space-y-3 shadow-lg">
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-[#122A14] to-[#0A160D] border border-[#5DD62C]/40 space-y-3 shadow-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#00E676]" />
+                  <Sparkles className="w-4 h-4 text-[#5DD62C]" />
                   <span className="text-xs font-semibold text-white uppercase tracking-wider">
                     AI Opportunity Fit Analysis
                   </span>
                 </div>
-                <div className="font-mono text-sm font-bold text-[#00E676]">
+                <div className="font-mono text-sm font-bold text-[#5DD62C]">
                   {selectedOpportunity.match_score}% Match Score
                 </div>
               </div>
@@ -169,14 +170,14 @@ export const OpportunityDetailDrawer: React.FC = () => {
               <div className="space-y-1.5">
                 {selectedOpportunity.match_reasons.map((reason, idx) => (
                   <div key={idx} className="flex items-start gap-2 text-xs text-slate-200">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#00E676] shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#5DD62C] shrink-0 mt-0.5" />
                     <span>{reason}</span>
                   </div>
                 ))}
               </div>
 
               {selectedOpportunity.missing_requirements.length > 0 && (
-                <div className="pt-2 border-t border-[#00E676]/20 text-xs text-amber-300 flex items-center gap-1.5">
+                <div className="pt-2 border-t border-[#5DD62C]/20 text-xs text-amber-300 flex items-center gap-1.5">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                   <span>Recommendation: {selectedOpportunity.missing_requirements[0]}</span>
                 </div>
@@ -187,7 +188,7 @@ export const OpportunityDetailDrawer: React.FC = () => {
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08]">
                 <div className="flex items-center gap-1.5 text-slate-400 font-mono text-[11px] uppercase">
-                  <MapPin className="w-3.5 h-3.5 text-[#00E676]" />
+                  <MapPin className="w-3.5 h-3.5 text-[#5DD62C]" />
                   <span>Location</span>
                 </div>
                 <div className="text-white font-medium mt-1 truncate">
@@ -197,7 +198,7 @@ export const OpportunityDetailDrawer: React.FC = () => {
 
               <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08]">
                 <div className="flex items-center gap-1.5 text-slate-400 font-mono text-[11px] uppercase">
-                  <Calendar className="w-3.5 h-3.5 text-[#00E676]" />
+                  <Calendar className="w-3.5 h-3.5 text-[#5DD62C]" />
                   <span>Deadline</span>
                 </div>
                 <div className="text-white font-medium mt-1 font-mono">
@@ -207,21 +208,21 @@ export const OpportunityDetailDrawer: React.FC = () => {
 
               <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08]">
                 <div className="flex items-center gap-1.5 text-slate-400 font-mono text-[11px] uppercase">
-                  <DollarSign className="w-3.5 h-3.5 text-[#00E676]" />
+                  <DollarSign className="w-3.5 h-3.5 text-[#5DD62C]" />
                   <span>Stipend / Award</span>
                 </div>
-                <div className="text-[#00E676] font-medium mt-1 font-mono">
+                <div className="text-[#5DD62C] font-medium mt-1 font-mono">
                   {selectedOpportunity.stipendOrAward}
                 </div>
               </div>
 
               <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08]">
                 <div className="flex items-center gap-1.5 text-slate-400 font-mono text-[11px] uppercase">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#00E676]" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#5DD62C]" />
                   <span>Verification Status</span>
                 </div>
                 <div className="text-white font-medium mt-1 capitalize flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#00E676]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#5DD62C]" />
                   {selectedOpportunity.eligibility_status}
                 </div>
               </div>
@@ -241,7 +242,7 @@ export const OpportunityDetailDrawer: React.FC = () => {
             <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Bot className="w-4 h-4 text-[#00E676]" />
+                  <Bot className="w-4 h-4 text-[#5DD62C]" />
                   <span className="text-xs font-semibold text-white uppercase tracking-wider">
                     TinyFish Web Extractor & Summary
                   </span>
@@ -250,7 +251,7 @@ export const OpportunityDetailDrawer: React.FC = () => {
                   <button
                     onClick={handleFetchAiSummary}
                     disabled={loadingSummary}
-                    className="px-3 py-1 rounded-lg bg-[#00E676]/15 hover:bg-[#00E676]/25 border border-[#00E676]/40 text-[#00E676] text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+                    className="px-3 py-1 rounded-lg bg-[#5DD62C]/15 hover:bg-[#5DD62C]/25 border border-[#5DD62C]/40 text-[#5DD62C] text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
                   >
                     {loadingSummary ? 'Extracting Page...' : 'Extract Full Summary'}
                   </button>
@@ -332,7 +333,7 @@ export const OpportunityDetailDrawer: React.FC = () => {
                       onClick={() => updateApplicationStatus(selectedOpportunity.id, status)}
                       className={`py-1.5 px-2 rounded-lg text-xs font-mono capitalize transition-all cursor-pointer ${
                         isCurrent
-                          ? 'bg-[#00E676] text-black font-bold shadow-md'
+                          ? 'bg-[#5DD62C] text-black font-bold shadow-md'
                           : 'bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]'
                       }`}
                     >
@@ -345,26 +346,38 @@ export const OpportunityDetailDrawer: React.FC = () => {
           </div>
 
           {/* Drawer Sticky Footer with CTAs */}
-          <div className="p-6 border-t border-white/[0.08] bg-[#050A08]/95 backdrop-blur-xl flex items-center justify-between gap-3">
+          <div className="p-4 sm:p-6 border-t border-white/[0.08] bg-[#0F0F0F]/95 backdrop-blur-xl flex flex-wrap items-center justify-between gap-3">
             <button
               onClick={() => toggleSaveOpportunity(selectedOpportunity.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all text-xs font-semibold cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-xl border transition-all text-xs font-semibold cursor-pointer ${
                 isSaved
-                  ? 'bg-[#00E676]/20 border-[#00E676]/40 text-[#00E676]'
+                  ? 'bg-[#5DD62C]/20 border-[#5DD62C]/50 text-[#5DD62C]'
                   : 'bg-white/[0.04] border-white/[0.1] text-slate-200 hover:text-white hover:bg-white/[0.08]'
               }`}
             >
-              <Bookmark className="w-4 h-4" fill={isSaved ? '#00E676' : 'none'} />
+              <Bookmark className="w-4 h-4" fill={isSaved ? '#5DD62C' : 'none'} />
               <span>{isSaved ? 'Saved' : 'Save'}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setSelectedOpportunity(selectedOpportunity);
+                setIsHirelyCoreOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-xl bg-[#202020] border border-[#5DD62C]/50 hover:border-[#5DD62C] text-[#5DD62C] hover:text-white text-xs font-semibold transition-all cursor-pointer shadow-sm"
+              title="Interrogate this opportunity with Hirely Core AI"
+            >
+              <Bot className="w-4 h-4 text-[#5DD62C]" />
+              <span>Ask AI Core</span>
             </button>
 
             <a
               href={selectedOpportunity.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-5 rounded-xl bg-white text-black hover:bg-slate-100 text-xs font-bold transition-all shadow-xl cursor-pointer"
+              className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#F8F8F8] text-[#0F0F0F] hover:bg-[#5DD62C] text-xs font-bold transition-all shadow-xl cursor-pointer"
             >
-              <span>Open Official Opportunity</span>
+              <span>Apply Official Portal</span>
               <ExternalLink className="w-4 h-4" />
             </a>
           </div>

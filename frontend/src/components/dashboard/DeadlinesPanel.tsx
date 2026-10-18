@@ -16,7 +16,7 @@ export const DeadlinesPanel: React.FC = () => {
       <div>
         <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] mb-3">
           <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-[#00E676]" />
+            <Clock className="w-4 h-4 text-[#5DD62C]" />
             <h3 className="text-xs font-semibold uppercase tracking-wider text-white">
               Upcoming Deadlines
             </h3>
@@ -34,7 +34,7 @@ export const DeadlinesPanel: React.FC = () => {
               className="py-3 flex items-center justify-between gap-3 group cursor-pointer hover:bg-white/[0.03] -mx-2 px-2.5 rounded-xl transition-colors"
             >
               <div className="overflow-hidden">
-                <div className="text-xs font-semibold text-white group-hover:text-[#00E676] transition-colors truncate">
+                <div className="text-xs font-semibold text-white group-hover:text-[#5DD62C] transition-colors truncate">
                   {opp.title}
                 </div>
                 <div className="text-[11px] text-slate-400 truncate mt-0.5">
@@ -51,7 +51,7 @@ export const DeadlinesPanel: React.FC = () => {
                     {opp.deadlineFormatted}
                   </div>
                 </div>
-                <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-[#00E676] transition-colors" />
+                <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-[#5DD62C] transition-colors" />
               </div>
             </div>
           ))}
@@ -59,7 +59,7 @@ export const DeadlinesPanel: React.FC = () => {
       </div>
 
       <div className="pt-3 text-[11px] font-mono text-slate-300 flex items-center gap-2 border-t border-white/[0.06] mt-3">
-        <AlertCircle className="w-3.5 h-3.5 text-[#00E676] shrink-0" />
+        <AlertCircle className="w-3.5 h-3.5 text-[#5DD62C] shrink-0" />
         <span>Deadlines cross-referenced with live provider portals.</span>
       </div>
     </div>

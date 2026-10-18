@@ -199,7 +199,7 @@ export const SettingsView: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-1">
               <span className="font-mono text-[11px] text-slate-400 uppercase">
-                API Base URL (VITE_API_BASE_URL)
+                API Base URL
               </span>
               <div className="font-mono text-slate-200 truncate font-medium">
                 {import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}

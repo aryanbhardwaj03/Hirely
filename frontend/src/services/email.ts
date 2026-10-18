@@ -1,6 +1,10 @@
 import { EmailDigestConfig, Opportunity } from '../types/opportunity';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+/**
+ * Dedicated Email Service Adapter for Hirely
+ * Prepared for pending SMTP backend integration from teammate.
+ * Preserves separation between UI preferences and actual delivery logic.
+ */
 
 export interface ScheduleEmailPayload {
   email: string;
@@ -10,73 +14,50 @@ export interface ScheduleEmailPayload {
   reminderType: 'applied_confirmation' | 'deadline_approaching';
 }
 
+export type EmailDeliveryStatus =
+  | 'idle'
+  | 'pending_backend_contract'
+  | 'delivered'
+  | 'failed';
+
 export interface EmailDispatchResult {
   success: boolean;
+  status: EmailDeliveryStatus;
   statusText: string;
-  isSimulated: boolean;
 }
 
 /**
- * Schedules an email notification (e.g. application confirmation or deadline reminder).
+ * Checks if the backend SMTP service endpoint is configured.
+ */
+export function isSmtpBackendAvailable(): boolean {
+  // Marked as pending until backend teammate supplies the finalized SMTP route
+  return false;
+}
+
+/**
+ * Schedules an email notification (application confirmation or deadline reminder).
+ * Kept pending to avoid fake delivery claims before backend deployment.
  */
 export async function scheduleEmailNotification(payload: ScheduleEmailPayload): Promise<EmailDispatchResult> {
-  if (API_BASE_URL) {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/schedule-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (res.ok) {
-        return {
-          success: true,
-          statusText: 'Confirmation email queued on production mail worker.',
-          isSimulated: false,
-        };
-      }
-    } catch {
-      // Fallback
-    }
-  }
-
-  // Hackathon simulation mode
+  // Explicitly note that SMTP backend contract is currently pending deployment by backend teammate
   return {
-    success: true,
-    statusText: `Confirmation email scheduled for ${payload.email}`,
-    isSimulated: true,
+    success: false,
+    status: 'pending_backend_contract',
+    statusText: `SMTP notification adapter ready for ${payload.email} — awaiting finalized backend contract.`,
   };
 }
 
 /**
  * Triggers dispatch of the student opportunity briefing digest.
+ * UI cleanly reports pending backend status without claiming fake delivery.
  */
 export async function sendDigestEmail(
   config: EmailDigestConfig,
   topOpportunities: Opportunity[]
 ): Promise<EmailDispatchResult> {
-  if (API_BASE_URL) {
-    try {
-      // TODO: Connects to backend email digest endpoint
-      const res = await fetch(`${API_BASE_URL}/api/send-digest`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ config, opportunityIds: topOpportunities.map(o => o.id) }),
-      });
-      if (res.ok) {
-        return {
-          success: true,
-          statusText: `Live digest sent to ${config.email}`,
-          isSimulated: false,
-        };
-      }
-    } catch {
-      // Fallback
-    }
-  }
-
   return {
-    success: true,
-    statusText: `Demo digest generated and queued for ${config.email}`,
-    isSimulated: true,
+    success: false,
+    status: 'pending_backend_contract',
+    statusText: `Email delivery adapter primed for ${config.email} (${topOpportunities.length} opportunities) — awaiting backend SMTP deployment.`,
   };
 }

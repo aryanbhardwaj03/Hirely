@@ -1,7 +1,9 @@
 import os
+from pathlib import Path
 from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+BASE_DIR = Path(__file__).resolve().parents[2]  # the backend/ folder
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Hirely AI Backend"
@@ -10,7 +12,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api"
 
     # Database
-    DATABASE_URL: str = "sqlite+aiosqlite:///./hirely.db"
+    DATABASE_URL: str = f"sqlite+aiosqlite:///{(BASE_DIR / 'hirely.db').as_posix()}"
 
     # TinyFish AI Credentials
     TINYFISH_API_KEY: str = ""
@@ -34,7 +36,7 @@ class Settings(BaseSettings):
     ENABLE_MOCK_FALLBACK: bool = True
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=BASE_DIR / ".env",
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore"

@@ -10,81 +10,83 @@ import { EmailAutomationCard } from '../dashboard/EmailAutomationCard';
 import { DiscoverView } from '../discover/DiscoverView';
 import { ProfileView } from '../profile/ProfileView';
 import { SettingsView } from '../settings/SettingsView';
+import { HirelyCoreView } from '../assistant/HirelyCoreView';
+import { HirelyCoreDrawer } from '../assistant/HirelyCoreDrawer';
+import { NotFoundView } from '../common/NotFoundView';
+import { SignInView } from '../auth/SignInView';
 import { OpportunityDetailDrawer } from '../opportunity/OpportunityDetailDrawer';
 import { DiscoveryModal } from '../dashboard/DiscoveryModal';
 import { EmailDigestModal } from '../email/EmailDigestModal';
 import { ToastContainer } from '../ui/Toast';
+import { Bot, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export const AppShell: React.FC = () => {
-  const { activeTab, sidebarCollapsed } = useApp();
+  const {
+    activeTab,
+    sidebarCollapsed,
+    currentUser,
+    setIsHirelyCoreOpen
+  } = useApp();
+
+  // Route protection: If user is not signed in, show the Firebase Google sign-in view
+  if (!currentUser) {
+    return <SignInView />;
+  }
 
   return (
-    <div className="relative min-h-screen bg-[#050A08] text-[#F8F8F8] flex overflow-x-hidden selection:bg-[#00E676]/25 selection:text-[#00E676]">
-      {/* 1. Luminous Radial Glows bleeding in from corners & center */}
-      <div className="fixed top-0 left-0 w-[550px] h-[550px] bg-[#00E676]/15 rounded-full blur-[150px] pointer-events-none -translate-x-1/4 -translate-y-1/4" />
-      <div className="fixed bottom-0 right-0 w-[650px] h-[650px] bg-[#00E676]/12 rounded-full blur-[170px] pointer-events-none translate-x-1/4 translate-y-1/4" />
+    <div className="relative min-h-screen bg-[#0F0F0F] text-[#F8F8F8] flex overflow-x-hidden selection:bg-[#5DD62C]/25 selection:text-[#5DD62C]">
+      {/* 1. Luminous Radial Glows bleeding in from corners & center (#337418 / #5DD62C) */}
+      <div className="fixed top-0 left-0 w-[550px] h-[550px] bg-[#337418]/20 rounded-full blur-[150px] pointer-events-none -translate-x-1/4 -translate-y-1/4" />
+      <div className="fixed bottom-0 right-0 w-[650px] h-[650px] bg-[#5DD62C]/10 rounded-full blur-[170px] pointer-events-none translate-x-1/4 translate-y-1/4" />
       <div className="fixed top-1/3 left-1/2 w-[600px] h-[500px] bg-[#122A14]/40 rounded-full blur-[180px] pointer-events-none -translate-x-1/2" />
 
-      {/* 2. Slow-Drifting Blurred Gradient Orbs (Framer Motion 20-30s loops) */}
+      {/* 2. Slow-Drifting Blurred Gradient Orbs */}
       <motion.div
         animate={{
-          x: [0, 80, -40, 0],
-          y: [0, -60, 40, 0],
-          scale: [1, 1.15, 0.95, 1],
+          x: [0, 60, -30, 0],
+          y: [0, -50, 30, 0],
+          scale: [1, 1.1, 0.95, 1],
         }}
         transition={{
           duration: 26,
           repeat: Infinity,
           ease: 'easeInOut',
         }}
-        className="fixed top-1/4 right-1/4 w-96 h-96 bg-[#00E676]/10 rounded-full blur-[140px] pointer-events-none"
-      />
-      <motion.div
-        animate={{
-          x: [0, -70, 50, 0],
-          y: [0, 70, -30, 0],
-          scale: [1, 1.2, 0.9, 1],
-        }}
-        transition={{
-          duration: 30,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className="fixed bottom-1/3 left-1/3 w-80 h-80 bg-[#00E5FF]/[0.06] rounded-full blur-[150px] pointer-events-none"
+        className="fixed top-1/4 right-1/4 w-80 h-80 bg-[#5DD62C]/[0.08] rounded-full blur-[140px] pointer-events-none"
       />
 
       {/* 3. Subtle Perspective Grid & Fine Dot-Grid Texture */}
-      <div className="fixed inset-0 spatial-dot-grid opacity-70 pointer-events-none" />
-      <div className="fixed inset-0 spatial-perspective-grid opacity-40 pointer-events-none" />
+      <div className="fixed inset-0 spatial-dot-grid opacity-50 pointer-events-none" />
+      <div className="fixed inset-0 spatial-perspective-grid opacity-30 pointer-events-none" />
 
       {/* Floating Left Navigation Rail */}
       <Sidebar />
 
-      {/* Main App Workspace */}
+      {/* Main App Workspace with Responsive Padding (pl-0 on mobile, pl-20 on tablet, pl-64/20 on desktop) */}
       <div
-        className={`relative z-10 flex-1 flex flex-col min-h-screen transition-all duration-300 ease-out ${
-          sidebarCollapsed ? 'pl-20' : 'pl-64'
+        className={`relative z-10 flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300 ease-out pl-0 md:pl-20 ${
+          sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
         }`}
       >
         {/* Top Header Bar */}
         <TopBar />
 
         {/* Dynamic Main Content Viewport */}
-        <main className="flex-1 p-6 lg:p-8 max-w-[1540px] w-full mx-auto space-y-6">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6 min-w-0 overflow-x-hidden">
           {activeTab === 'dashboard' && (
-            <div className="space-y-6">
+            <div className="space-y-6 w-full min-w-0">
               {/* 1. Hero: Recommended For You Feed + Live Scan Line */}
               <RecommendedFeed />
 
               {/* 2. Main Area: Two-Column Split (Radar Command Center + Application Pipeline) */}
-              <div className="flex flex-col lg:flex-row gap-6 items-stretch">
+              <div className="flex flex-col lg:flex-row gap-6 items-stretch w-full min-w-0">
                 <OpportunityRadar />
                 <KanbanBoard />
               </div>
 
               {/* 3. Bottom Strip: Upcoming Deadlines + Email Automation */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full min-w-0">
                 <DeadlinesPanel />
                 <EmailAutomationCard />
               </div>
@@ -93,8 +95,14 @@ export const AppShell: React.FC = () => {
 
           {activeTab === 'discover' && <DiscoverView />}
 
+          {activeTab === 'assistant' && (
+            <div className="space-y-4 w-full min-w-0">
+              <HirelyCoreView embedded={false} />
+            </div>
+          )}
+
           {activeTab === 'tracker' && (
-            <div className="space-y-6">
+            <div className="space-y-6 w-full min-w-0">
               <div className="pb-3 border-b border-white/[0.08]">
                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
                   Application Pipeline Tracker
@@ -108,12 +116,32 @@ export const AppShell: React.FC = () => {
           )}
 
           {activeTab === 'profile' && <ProfileView />}
-
           {activeTab === 'settings' && <SettingsView />}
+          {activeTab === 'notfound' && <NotFoundView />}
         </main>
       </div>
 
+      {/* Floating Hirely Core AI quick trigger in bottom right */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setIsHirelyCoreOpen(true)}
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-[#202020] border border-[#5DD62C]/60 hover:border-[#5DD62C] text-white shadow-[0_0_30px_rgba(93,214,44,0.3)] backdrop-blur-2xl transition-all cursor-pointer group"
+        title="Open Hirely Core AI"
+      >
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#5DD62C] opacity-75" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#5DD62C]" />
+        </span>
+        <Bot className="w-4 h-4 text-[#5DD62C] group-hover:rotate-12 transition-transform" />
+        <span className="text-xs font-semibold tracking-wide">Hirely Core AI</span>
+        <span className="text-[10px] font-mono text-[#5DD62C] bg-[#5DD62C]/15 px-1.5 py-0.5 rounded font-bold">
+          GEMINI
+        </span>
+      </motion.button>
+
       {/* Overlays, Drawers & Portals */}
+      <HirelyCoreDrawer />
       <OpportunityDetailDrawer />
       <DiscoveryModal />
       <EmailDigestModal />

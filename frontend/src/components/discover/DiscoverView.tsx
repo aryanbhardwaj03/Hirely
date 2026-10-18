@@ -1,26 +1,37 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { OpportunityCategory, Opportunity } from '../../types/opportunity';
+import { OpportunityCategory, Opportunity, OpportunitySortOption, LocationScope } from '../../types/opportunity';
 import { OpportunityCard } from '../opportunity/OpportunityCard';
-import { 
-  Search, 
-  Filter, 
-  Sparkles, 
-  MapPin, 
-  Globe, 
+import {
+  Search,
+  Filter,
+  Sparkles,
+  MapPin,
+  Globe,
   RotateCcw,
-  RefreshCw
+  RefreshCw,
+  ArrowUpDown,
+  Building
 } from 'lucide-react';
 import { searchBackendOpportunities } from '../../services/api';
+import { matchesLocationScope, sortOpportunities, isTrustworthySource } from '../../utils/opportunityFilters';
 
 export const DiscoverView: React.FC = () => {
-  const { opportunities, runDiscovery, isDiscovering, fastapiHealth } = useApp();
+  const {
+    opportunities,
+    runDiscovery,
+    isDiscovering,
+    fastapiHealth,
+    profile,
+    locationScope,
+    setLocationScope,
+    sortBy,
+    setSortBy
+  } = useApp();
 
   const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<OpportunityCategory[]>([]);
   const [remoteOnly, setRemoteOnly] = useState(false);
-  const [sortBy, setSortBy] = useState<'match' | 'deadline' | 'title'>('match');
-  const [minMatch, setMinMatch] = useState(80);
   const [backendResults, setBackendResults] = useState<Opportunity[] | null>(null);
 
   const categories: { id: OpportunityCategory; label: string }[] = [
@@ -32,13 +43,20 @@ export const DiscoverView: React.FC = () => {
     { id: 'competition', label: 'Competitions' },
   ];
 
+  const locationOptions: { id: LocationScope; label: string }[] = [
+    { id: 'delhi_ncr', label: 'Delhi/NCR, India' },
+    { id: 'india', label: 'Anywhere in India' },
+    { id: 'remote_worldwide', label: 'Remote Worldwide' },
+    { id: 'all', label: 'All Global Locations' },
+  ];
+
   const toggleCategory = (cat: OpportunityCategory) => {
-    setSelectedCategories(prev => 
+    setSelectedCategories(prev =>
       prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
     );
   };
 
-  // Live search call to backend if connected and user types
+  // Live search call to backend if connected
   useEffect(() => {
     if (!fastapiHealth?.is_connected || !search.trim()) {
       setBackendResults(null);
@@ -64,46 +82,50 @@ export const DiscoverView: React.FC = () => {
   const sourceList = backendResults || opportunities;
 
   const filteredOpportunities = useMemo(() => {
-    return sourceList.filter(opp => {
+    const filtered = sourceList.filter(opp => {
+      // Trustworthy source filter
+      if (!isTrustworthySource(opp.url, opp.source)) return false;
+
+      // Location scope filter
+      if (!matchesLocationScope(opp, locationScope)) return false;
+
       // Search text
       if (search.trim() && !backendResults) {
         const q = search.toLowerCase();
         const matchesTitle = opp.title.toLowerCase().includes(q);
         const matchesOrg = opp.organization.toLowerCase().includes(q);
         const matchesSkill = opp.required_skills.some(s => s.toLowerCase().includes(q));
-        if (!matchesTitle && !matchesOrg && !matchesSkill) return false;
+        const matchesLocation = opp.location.toLowerCase().includes(q);
+        if (!matchesTitle && !matchesOrg && !matchesSkill && !matchesLocation) return false;
       }
+
       // Categories
       if (selectedCategories.length > 0 && !selectedCategories.includes(opp.category)) {
         return false;
       }
+
       // Remote only
       if (remoteOnly && !opp.isRemote) {
         return false;
       }
-      // Min match
-      if (opp.match_score < minMatch) {
-        return false;
-      }
+
       return true;
-    }).sort((a, b) => {
-      if (sortBy === 'match') return b.match_score - a.match_score;
-      if (sortBy === 'deadline') return (a.daysLeft ?? 999) - (b.daysLeft ?? 999);
-      return a.title.localeCompare(b.title);
     });
-  }, [sourceList, search, selectedCategories, remoteOnly, minMatch, sortBy, backendResults]);
+
+    return sortOpportunities(filtered, sortBy, profile.location);
+  }, [sourceList, search, selectedCategories, remoteOnly, locationScope, sortBy, profile.location, backendResults]);
 
   const resetFilters = () => {
     setSearch('');
     setSelectedCategories([]);
     setRemoteOnly(false);
-    setMinMatch(80);
-    setSortBy('match');
+    setLocationScope('delhi_ncr');
+    setSortBy('newest');
     setBackendResults(null);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full min-w-0">
       {/* View Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -111,14 +133,14 @@ export const DiscoverView: React.FC = () => {
             Opportunity Intelligence Engine
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 mt-1">
-            Explore live scholarships, fellowships, internships, and hackathons calibrated to your academic path.
+            Explore verified scholarships, internships, hackathons, and fellowships calibrated to your academic path.
           </p>
         </div>
 
         <button
           onClick={() => runDiscovery(selectedCategories)}
           disabled={isDiscovering}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00E676]/20 hover:bg-[#00E676]/30 border border-[#00E676]/50 text-[#00E676] text-xs font-bold shadow-[0_0_20px_rgba(0,230,118,0.18)] transition-all cursor-pointer disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#5DD62C]/20 hover:bg-[#5DD62C]/30 border border-[#5DD62C]/50 text-[#5DD62C] text-xs font-bold shadow-[0_0_20px_rgba(93,214,44,0.2)] transition-all cursor-pointer disabled:opacity-50"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isDiscovering ? 'animate-spin' : ''}`} />
           <span>{isDiscovering ? 'Scanning...' : 'Rerun Live Scan'}</span>
@@ -126,7 +148,7 @@ export const DiscoverView: React.FC = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="rounded-2xl p-6 bg-white/[0.04] backdrop-blur-2xl border border-white/[0.1] shadow-[0_0_40px_rgba(0,230,118,0.08)] space-y-4 glass-inner-highlight">
+      <div className="rounded-2xl p-5 sm:p-6 bg-[#202020]/90 backdrop-blur-2xl border border-white/[0.1] shadow-2xl space-y-4">
         <div className="flex flex-col md:flex-row gap-3">
           {/* Search Input */}
           <div className="relative flex-1">
@@ -135,22 +157,38 @@ export const DiscoverView: React.FC = () => {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Filter by title, company, skills (e.g. PyTorch, React, AnitaB)..."
-              className="w-full h-10 pl-10 pr-4 rounded-xl bg-white/[0.03] border border-white/[0.1] text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-[#00E676]/50 transition-colors"
+              placeholder="Search by title, organization, skills (e.g. Python, PyTorch, Delhi, MIT)..."
+              className="w-full h-10 pl-10 pr-4 rounded-xl bg-[#0F0F0F] border border-white/[0.1] text-xs sm:text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-[#5DD62C]/60 transition-colors"
             />
+          </div>
+
+          {/* Location Scope Selector */}
+          <div className="flex items-center gap-2">
+            <MapPin className="w-3.5 h-3.5 text-[#5DD62C] shrink-0" />
+            <select
+              value={locationScope}
+              onChange={(e) => setLocationScope(e.target.value as LocationScope)}
+              className="h-10 px-3 rounded-xl bg-[#0F0F0F] border border-white/[0.1] text-xs font-mono text-white focus:outline-none focus:border-[#5DD62C]/60 cursor-pointer"
+            >
+              {locationOptions.map(opt => (
+                <option key={opt.id} value={opt.id}>{opt.label}</option>
+              ))}
+            </select>
           </div>
 
           {/* Sort By Dropdown */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-slate-300 uppercase font-medium">Sort:</span>
+            <ArrowUpDown className="w-3.5 h-3.5 text-[#5DD62C] shrink-0" />
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="h-10 px-3 rounded-xl bg-[#090C0E] border border-white/[0.1] text-xs text-white focus:outline-none focus:border-[#00E676]/50"
+              onChange={(e) => setSortBy(e.target.value as OpportunitySortOption)}
+              className="h-10 px-3 rounded-xl bg-[#0F0F0F] border border-white/[0.1] text-xs font-mono text-white focus:outline-none focus:border-[#5DD62C]/60 cursor-pointer"
             >
-              <option value="match">Relevance Match %</option>
-              <option value="deadline">Approaching Deadlines</option>
-              <option value="title">Alphabetical Title</option>
+              <option value="newest">Newest published date</option>
+              <option value="highest_paying">Highest compensation</option>
+              <option value="nearest">Nearest to my location</option>
+              <option value="best_match">Best profile match</option>
+              <option value="deadline_soonest">Deadline soonest</option>
             </select>
           </div>
         </div>
@@ -159,8 +197,8 @@ export const DiscoverView: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/[0.06]">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-slate-300 font-semibold mr-1 flex items-center gap-1">
-              <Filter className="w-3.5 h-3.5 text-[#00E676]" />
-              Type:
+              <Filter className="w-3.5 h-3.5 text-[#5DD62C]" />
+              Category:
             </span>
             {categories.map((cat) => {
               const isSelected = selectedCategories.includes(cat.id);
@@ -168,9 +206,9 @@ export const DiscoverView: React.FC = () => {
                 <button
                   key={cat.id}
                   onClick={() => toggleCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-[#00E676] text-black shadow-md'
+                      ? 'bg-[#5DD62C] text-[#0F0F0F] shadow-[0_0_12px_rgba(93,214,44,0.3)] font-bold'
                       : 'bg-white/[0.04] text-slate-300 hover:text-white hover:bg-white/[0.08] border border-white/[0.08]'
                   }`}
                 >
@@ -187,10 +225,10 @@ export const DiscoverView: React.FC = () => {
                 type="checkbox"
                 checked={remoteOnly}
                 onChange={(e) => setRemoteOnly(e.target.checked)}
-                className="rounded accent-[#00E676] w-3.5 h-3.5 cursor-pointer"
+                className="rounded accent-[#5DD62C] w-3.5 h-3.5 cursor-pointer"
               />
               <span className="flex items-center gap-1">
-                <Globe className="w-3.5 h-3.5 text-[#00E676]" />
+                <Globe className="w-3.5 h-3.5 text-[#5DD62C]" />
                 Remote Only
               </span>
             </label>
@@ -210,10 +248,10 @@ export const DiscoverView: React.FC = () => {
       {/* Results Header */}
       <div className="flex items-center justify-between text-xs text-slate-300 px-1 font-mono">
         <span>
-          Showing <span className="text-[#00E676] font-bold">{filteredOpportunities.length}</span> opportunities
+          Showing <span className="text-[#5DD62C] font-bold">{filteredOpportunities.length}</span> verified opportunities
         </span>
         <span className="text-[11px] text-slate-400">
-          Source: Verified TinyFish Portals
+          Source: Verified Employer & Competition Portals
         </span>
       </div>
 
@@ -225,17 +263,21 @@ export const DiscoverView: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl p-12 bg-white/[0.02] border border-white/[0.08] text-center space-y-3">
+        <div className="rounded-2xl p-12 bg-[#202020]/60 border border-white/[0.08] text-center space-y-4">
           <Sparkles className="w-8 h-8 text-slate-500 mx-auto" />
           <h3 className="text-base font-semibold text-white">No opportunities match current criteria</h3>
           <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            Try adjusting your search terms, lowering the minimum match threshold, or toggling remote filters.
+            Try broadening your location filter, clearing category selections, or adjusting your search keywords.
           </p>
           <button
-            onClick={resetFilters}
-            className="px-4 py-2 rounded-xl bg-white text-black text-xs font-semibold hover:bg-slate-200 transition-colors cursor-pointer"
+            onClick={() => {
+              setLocationScope('all');
+              setSelectedCategories([]);
+              setSearch('');
+            }}
+            className="px-4 py-2 rounded-xl bg-[#5DD62C] text-[#0F0F0F] text-xs font-bold hover:shadow-[0_0_15px_rgba(93,214,44,0.4)] transition-all cursor-pointer"
           >
-            Reset Filters
+            Show All Opportunities
           </button>
         </div>
       )}
