@@ -371,7 +371,7 @@ class EmailService:
           <!-- CTA -->
           <tr>
             <td style="padding:0 40px 36px 40px;text-align:center;">
-              <a href="http://localhost:5173" target="_blank" style="display:inline-block;background:linear-gradient(135deg, #10b981 0%, #6366f1 100%);color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;box-shadow:0 10px 25px rgba(99,102,241,0.4);">
+              <a href="{settings.FRONTEND_URL}" target="_blank" style="display:inline-block;background:linear-gradient(135deg, #10b981 0%, #6366f1 100%);color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;box-shadow:0 10px 25px rgba(99,102,241,0.4);">
                 Explore Your Opportunities &rarr;
               </a>
             </td>
@@ -400,7 +400,7 @@ Skills: {", ".join(skills) if skills else "None listed"}
 
 Your AI Career Co-Pilot is active. We autonomously discover and match relevant jobs, internships, and hackathons using TinyFish AI Agents.
 
-Explore your matched opportunities: http://localhost:5173
+Explore your matched opportunities: {settings.FRONTEND_URL}
 """
         return subject, html, text
 
@@ -594,7 +594,7 @@ URL: {url}
                 <span style="color:#cbd5e1;font-size:13px;display:block;margin-bottom:10px;">
                   Looking for more custom opportunities or want AI to summarize job descriptions?
                 </span>
-                <a href="http://localhost:5173" target="_blank" style="display:inline-block;background:linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 28px;border-radius:8px;">
+                <a href="{settings.FRONTEND_URL}" target="_blank" style="display:inline-block;background:linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 28px;border-radius:8px;">
                   Open Hirely AI Dashboard &rarr;
                 </a>
               </div>
@@ -622,7 +622,7 @@ URL: {url}
 Our TinyFish AI crawler discovered {count} high-scoring opportunities matching your skills:
 {cards_text}
 
-Visit your Hirely AI dashboard to view all active opportunities: http://localhost:5173"""
+Visit your Hirely AI dashboard to view all active opportunities: {settings.FRONTEND_URL}"""
 
         return subject, html, text
 

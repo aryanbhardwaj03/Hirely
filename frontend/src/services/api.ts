@@ -12,7 +12,7 @@ import {
 } from '../types/opportunity';
 import { INITIAL_OPPORTUNITIES } from '../data/opportunities';
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 export interface BackendHealth {
   status: 'healthy' | 'unavailable';
@@ -271,7 +271,7 @@ export async function searchBackendOpportunities(params: {
   limit?: number;
 }): Promise<Opportunity[]> {
   try {
-    const url = new URL(`${API_BASE_URL}/api/search`);
+    const url = new URL(`${API_BASE_URL}/api/search`, window.location.origin);
     if (params.query) url.searchParams.append('query', params.query);
     if (params.opportunity_type && params.opportunity_type !== 'all') {
       url.searchParams.append('opportunity_type', params.opportunity_type);
@@ -423,7 +423,7 @@ export async function fetchUserTrackedOpportunities(
   statusFilter?: string
 ): Promise<BackendTrackerItem[]> {
   try {
-    const url = new URL(`${API_BASE_URL}/api/tracker/${userId}`);
+    const url = new URL(`${API_BASE_URL}/api/tracker/${userId}`, window.location.origin);
     if (statusFilter) url.searchParams.append('status_filter', statusFilter);
 
     const res = await fetch(url.toString());

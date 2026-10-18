@@ -228,7 +228,7 @@ export const SettingsView: React.FC = () => {
                 API Base URL
               </span>
               <div className="font-mono text-slate-200 truncate font-medium">
-                {import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}
+                {import.meta.env.VITE_API_BASE_URL || window.location.origin}
               </div>
             </div>
 
