@@ -22,6 +22,17 @@ import { ToastContainer } from '../ui/Toast';
 import { Bot } from 'lucide-react';
 import { motion } from 'motion/react';
 
+// Paths that exist in the app. Keep in sync with the <Route> list below.
+const KNOWN_ROUTES = [
+  '/',
+  '/dashboard',
+  '/discover',
+  '/assistant',
+  '/tracker',
+  '/profile',
+  '/settings',
+];
+
 export const AppShell: React.FC = () => {
   const {
     sidebarCollapsed,
@@ -52,9 +63,12 @@ export const AppShell: React.FC = () => {
     }
   }, [location.pathname, setActiveTab]);
 
-  // Route protection: If user is not authenticated, show the authentication landing page
+  // Route protection: signed-out users see the sign-in page on real routes,
+  // and a standalone 404 (no sidebar, no user data) on unknown URLs.
   if (!currentUser) {
-    return <SignInView />;
+    const normalizedPath = (location.pathname.replace(/\/+$/, '') || '/').toLowerCase();
+    const isKnownRoute = KNOWN_ROUTES.includes(normalizedPath);
+    return isKnownRoute ? <SignInView /> : <NotFoundView standalone />;
   }
 
   return (
