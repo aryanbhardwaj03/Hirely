@@ -6,7 +6,7 @@ class EmailSendResponse(BaseModel):
     success: bool = Field(..., description="Whether the email was dispatched or simulated successfully")
     recipient: str = Field(..., description="Recipient email address")
     subject: str = Field(..., description="Email subject line")
-    mode: str = Field(..., description="'live' if transmitted via SMTP server, or 'simulated' if running in mock/demo mode")
+    mode: str = Field(..., description="'resend', 'smtp', or 'simulated'")
     message: str = Field(..., description="Status summary or diagnostic message")
     items_count: Optional[int] = Field(default=None, description="Number of job/opportunity items included in the email")
     details: Optional[Dict[str, Any]] = Field(default=None, description="Additional metadata or diagnostics")
@@ -15,8 +15,8 @@ class EmailSendResponse(BaseModel):
 class TestEmailRequest(BaseModel):
     recipient: EmailStr = Field(..., examples=["candidate@example.com"])
     subject: Optional[str] = Field(
-        default="Hirely AI - SMTP Service Verification",
-        examples=["Hirely AI - SMTP Service Verification"]
+        default="Hirely AI - Email Service Verification",
+        examples=["Hirely AI - Email Service Verification"]
     )
     message: Optional[str] = Field(
         default="This is a test email confirming that your Hirely AI SMTP configuration is active and working properly.",

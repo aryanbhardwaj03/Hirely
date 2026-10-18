@@ -19,20 +19,22 @@ from app.services.email_service import email_service
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/email", tags=["SMTP Email Notifications"])
+router = APIRouter(prefix="/email", tags=["Email Notifications"])
 
 
 @router.get("/status")
 async def get_email_status():
     """
-    Returns the current SMTP service status, host configuration,
-    and operational mode (Live vs. Simulated).
+    Returns the current email service status and active provider.
     """
     return {
         "status": "online",
+        "resend_enabled": settings.RESEND_ENABLED,
+        "resend_configured": email_service.is_resend_configured,
         "smtp_enabled": settings.SMTP_ENABLED,
+        "smtp_configured": email_service.is_smtp_configured,
         "is_configured": email_service.is_configured,
-        "mode": "live" if email_service.is_configured else "simulated",
+        "mode": email_service.provider_mode,
         "host": settings.SMTP_HOST,
         "port": settings.SMTP_PORT,
         "tls": settings.SMTP_TLS,
@@ -46,18 +48,19 @@ async def get_email_status():
 @router.post("/test", response_model=EmailSendResponse)
 async def send_test_email(data: TestEmailRequest):
     """
-    Sends a test email to verify SMTP server connectivity and authentication.
+    Sends a test email to verify the configured email provider.
     """
     html_content = f"""<!DOCTYPE html>
 <html>
 <body style="font-family:sans-serif;background-color:#0f172a;color:#e2e8f0;padding:30px;">
   <div style="max-width:500px;margin:auto;background-color:#1e293b;border-radius:12px;padding:24px;border:1px solid #334155;">
-    <h2 style="color:#6366f1;margin-top:0;">🚀 Hirely AI - SMTP Test Verification</h2>
+    <h2 style="color:#6366f1;margin-top:0;">🚀 Hirely AI - Email Test Verification</h2>
     <p style="font-size:14px;color:#cbd5e1;line-height:1.5;">{data.message}</p>
     <div style="background-color:#0f172a;border-radius:8px;padding:12px;margin:16px 0;font-size:12px;color:#94a3b8;">
+      <strong>Provider:</strong> {email_service.provider_mode}<br>
       <strong>SMTP Host:</strong> {settings.SMTP_HOST}:{settings.SMTP_PORT}<br>
       <strong>Sender:</strong> {email_service.from_name} &lt;{email_service.from_email}&gt;<br>
-      <strong>Mode:</strong> {'Live SMTP' if email_service.is_configured else 'Simulated Mock Mode'}
+      <strong>Mode:</strong> {email_service.provider_mode}
     </div>
     <p style="font-size:12px;color:#64748b;margin-bottom:0;">Hirely AI Automated Verification Service</p>
   </div>
@@ -66,7 +69,7 @@ async def send_test_email(data: TestEmailRequest):
 
     return await email_service.send_email(
         to_email=data.recipient,
-        subject=data.subject or "Hirely AI - SMTP Service Verification",
+        subject=data.subject or "Hirely AI - Email Service Verification",
         html_content=html_content,
         text_content=data.message
     )
@@ -97,7 +100,7 @@ async def send_welcome_email(
             success=True,
             recipient=user.email,
             subject=f"Welcome to Hirely AI, {user.name}!",
-            mode="live" if email_service.is_configured else "simulated",
+            mode=email_service.provider_mode,
             message="Welcome email queued for delivery in background task."
         )
 
@@ -163,7 +166,7 @@ async def send_opportunities_email(
             success=True,
             recipient=user.email,
             subject=f"Opportunity Digest for {user.name}",
-            mode="live" if email_service.is_configured else "simulated",
+            mode=email_service.provider_mode,
             message="Opportunity recommendation email queued for delivery in background task.",
             items_count=limit
         )
@@ -288,7 +291,7 @@ async def send_digest_to_all_users(
                 success=False,
                 recipient=user.email,
                 subject="Opportunity Digest",
-                mode="live" if email_service.is_configured else "simulated",
+                mode=email_service.provider_mode,
                 message=str(e)
             ))
 

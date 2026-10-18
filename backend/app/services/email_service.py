@@ -5,6 +5,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import List, Dict, Any, Optional, Tuple
 
+import httpx
+
 from app.core.config import settings
 from app.models.user_profile import UserProfile
 from app.schemas.user_profile import UserProfileBase
@@ -18,15 +20,19 @@ logger = logging.getLogger(__name__)
 
 class EmailService:
     """
-    SMTP Email Service for Hirely AI:
+    Email Service for Hirely AI:
     - Sends beautiful, responsive welcome emails on user onboarding.
     - Autonomously discovers and sends personalized job, internship, and hackathon
       recommendations according to user skills, target role, and TinyFish live search.
-    - Non-blocking execution via asyncio.to_thread for SMTP network I/O.
-    - Seamless fallback/simulation mode when SMTP credentials are not yet configured.
+    - Resend API as the primary transport when configured.
+    - SMTP as an optional fallback transport.
+    - Seamless simulation mode when no provider is configured.
     """
 
     def __init__(self):
+        self.resend_api_key = settings.RESEND_API_KEY.strip() if settings.RESEND_API_KEY else ""
+        self.resend_from_email = settings.RESEND_FROM_EMAIL.strip() if settings.RESEND_FROM_EMAIL else ""
+        self.resend_enabled = settings.RESEND_ENABLED
         self.host = settings.SMTP_HOST
         self.port = settings.SMTP_PORT
         self.user = settings.SMTP_USER.strip() if settings.SMTP_USER else ""
@@ -38,9 +44,66 @@ class EmailService:
         self.enabled = settings.SMTP_ENABLED
 
     @property
-    def is_configured(self) -> bool:
-        """Checks if real SMTP credentials are provided for live sending."""
+    def is_resend_configured(self) -> bool:
+        """Checks whether Resend is configured for live API delivery."""
+        return bool(self.resend_enabled and self.resend_api_key and self.resend_from_email)
+
+    @property
+    def is_smtp_configured(self) -> bool:
+        """Checks if real SMTP credentials are provided for fallback delivery."""
         return bool(self.enabled and self.host and self.user and self.password)
+
+    @property
+    def is_configured(self) -> bool:
+        """Checks whether any live email provider is configured."""
+        return self.is_resend_configured or self.is_smtp_configured
+
+    @property
+    def provider_mode(self) -> str:
+        """Returns the active provider and fallback state."""
+        if self.is_resend_configured:
+            return "resend"
+        if self.is_smtp_configured:
+            return "smtp"
+        return "simulated"
+
+    async def _send_resend(
+        self,
+        to_email: str,
+        subject: str,
+        html_content: str,
+        text_content: str
+    ) -> Dict[str, Any]:
+        """Send an email through the Resend HTTP API."""
+        response_payload = {
+            "from": self.resend_from_email,
+            "to": [to_email],
+            "subject": subject,
+            "html": html_content,
+            "text": text_content,
+        }
+        headers = {
+            "Authorization": f"Bearer {self.resend_api_key}",
+            "Content-Type": "application/json",
+        }
+
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            response = await client.post(
+                "https://api.resend.com/emails",
+                headers=headers,
+                json=response_payload,
+            )
+
+        if response.is_error:
+            detail = response.text[:500]
+            raise RuntimeError(f"Resend API returned HTTP {response.status_code}: {detail}")
+
+        result = response.json()
+        return {
+            "success": True,
+            "message": "Email transmitted successfully via Resend",
+            "provider_id": result.get("id"),
+        }
 
     def _send_smtp_sync(
         self,
@@ -87,26 +150,60 @@ class EmailService:
     ) -> EmailSendResponse:
         """
         Dispatches an email to the recipient.
-        If SMTP credentials are not configured, gracefully simulates and logs the email.
+        Uses Resend first, falls back to SMTP, and simulates when neither is configured.
         """
         if not text_content:
             text_content = "Please view this email in an HTML-compatible email client."
 
-        # Mock / Simulation Mode if credentials are not configured
-        if not self.is_configured:
+        # Resend is the primary transport.
+        if self.is_resend_configured:
+            try:
+                result = await self._send_resend(
+                    to_email,
+                    subject,
+                    html_content,
+                    text_content,
+                )
+                logger.info(f"[RESEND LIVE] Sent email to {to_email} with subject '{subject}'")
+                return EmailSendResponse(
+                    success=True,
+                    recipient=to_email,
+                    subject=subject,
+                    mode="resend",
+                    message=result["message"],
+                    details={
+                        "provider": "resend",
+                        "provider_id": result.get("provider_id"),
+                        "from_email": self.resend_from_email,
+                    }
+                )
+            except Exception as resend_error:
+                logger.error(f"[RESEND ERROR] Failed sending to {to_email}: {resend_error}")
+                if not self.is_smtp_configured:
+                    return EmailSendResponse(
+                        success=False,
+                        recipient=to_email,
+                        subject=subject,
+                        mode="resend",
+                        message=f"Resend delivery failed: {resend_error}",
+                        details={"provider": "resend"},
+                    )
+                logger.warning("[RESEND FALLBACK] Falling back to SMTP delivery")
+
+        # SMTP fallback or simulation mode.
+        if not self.is_smtp_configured:
+            html_content = self._replace_provider_label(html_content, "simulated")
             logger.info(
-                f"[SMTP SIMULATION] To: {to_email} | Subject: '{subject}' | Mode: Simulated | "
-                f"Host: {self.host}:{self.port}"
+                f"[EMAIL SIMULATION] To: {to_email} | Subject: '{subject}' | Mode: Simulated"
             )
             return EmailSendResponse(
                 success=True,
                 recipient=to_email,
                 subject=subject,
                 mode="simulated",
-                message="Email queued and simulated successfully. Set SMTP_USER & SMTP_PASSWORD in .env to deliver via live SMTP.",
+                message="Email queued and simulated successfully. Configure RESEND_API_KEY and RESEND_FROM_EMAIL for Resend delivery.",
                 details={
-                    "smtp_host": self.host,
-                    "smtp_port": self.port,
+                    "provider": "simulated",
                     "from_email": self.from_email,
                     "simulated": True
                 }
@@ -114,6 +211,7 @@ class EmailService:
 
         # Live SMTP Mode
         try:
+            html_content = self._replace_provider_label(html_content, "smtp")
             res = await asyncio.to_thread(
                 self._send_smtp_sync,
                 to_email,
@@ -128,7 +226,7 @@ class EmailService:
                 subject=subject,
                 mode="live",
                 message=res.get("message", "Email delivered via SMTP."),
-                details={"smtp_host": self.host, "smtp_port": self.port, "from_email": self.from_email}
+                details={"provider": "smtp", "smtp_host": self.host, "smtp_port": self.port, "from_email": self.from_email}
             )
         except smtplib.SMTPAuthenticationError as auth_err:
             logger.error(f"[SMTP AUTH ERROR] Failed sending to {to_email}: {auth_err}")
@@ -148,6 +246,17 @@ class EmailService:
                 mode="live",
                 message=f"SMTP Transmission Failed: {str(exc)}"
             )
+
+    @staticmethod
+    def _replace_provider_label(html_content: str, provider: str) -> str:
+        """Keep provider labels in generated HTML aligned with the actual transport."""
+        return html_content.replace(
+            "<strong>Provider:</strong> resend",
+            f"<strong>Provider:</strong> {provider}",
+        ).replace(
+            "<strong>Mode:</strong> resend",
+            f"<strong>Mode:</strong> {provider}",
+        )
 
     # -------------------------------------------------------------------------
     # Template Builders
