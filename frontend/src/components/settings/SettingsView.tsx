@@ -221,9 +221,9 @@ export const SettingsView: React.FC = () => {
         {/* Workspace Cache & Reset */}
         <div className="rounded-2xl p-6 bg-white/[0.02] border border-white/[0.06] flex items-center justify-between">
           <div>
-            <h3 className="text-xs font-semibold text-white">Reset Local Workspace State</h3>
+            <h3 className="text-xs font-semibold text-white">Reset Workspace Data</h3>
             <p className="text-[11px] text-slate-400">
-              Clear saved opportunities and applications stored in your browser session.
+              Clear your saved opportunities and application data for this account.
             </p>
           </div>
           <button
@@ -231,7 +231,7 @@ export const SettingsView: React.FC = () => {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-rose-500/20 transition-colors cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Demo Data</span>
+            <span>Reset Workspace</span>
           </button>
         </div>
       </div>

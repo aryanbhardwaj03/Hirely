@@ -47,7 +47,16 @@ export const OnboardingView: React.FC = () => {
           <div><label className={labelClass}>College / University *</label><input className={inputClass} value={university} onChange={e => setUniversity(e.target.value)} placeholder="Your institution" required /></div>
           <div><label className={labelClass}>Degree *</label><input className={inputClass} value={degree} onChange={e => setDegree(e.target.value)} placeholder="e.g. B.Tech, BSc, MBA" required /></div>
           <div><label className={labelClass}>Field of study / Major *</label><input className={inputClass} value={fieldOfStudy} onChange={e => setFieldOfStudy(e.target.value)} placeholder="e.g. Computer Science" required /></div>
-          <div><label className={labelClass}>Current year of study *</label><select className={inputClass} value={year} onChange={e => setYear(e.target.value)} required><option value="">Select year</option><option value="1">1st year</option><option value="2">2nd year</option><option value="3">3rd year</option><option value="4">4th year</option><option value="5">Graduate / Master's / PhD</option></select></div>
+          <div><label className={labelClass}>Current year of study *</label>
+            <select className={`${inputClass} bg-[#202020] [color-scheme:dark]`} value={year} onChange={e => setYear(e.target.value)} required>
+              <option value="" className="bg-[#202020] text-white">Select year</option>
+              <option value="1" className="bg-[#202020] text-white">1st year</option>
+              <option value="2" className="bg-[#202020] text-white">2nd year</option>
+              <option value="3" className="bg-[#202020] text-white">3rd year</option>
+              <option value="4" className="bg-[#202020] text-white">4th year</option>
+              <option value="5" className="bg-[#202020] text-white">Graduate / Master's / PhD</option>
+            </select>
+          </div>
           <div className="sm:col-span-2"><label className={labelClass}><MapPin size={13} className="mr-1 inline" />Current city / location *</label><input className={inputClass} value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Delhi, India" required /></div>
         </div></section>
         <section className="space-y-3"><h2 className="flex items-center gap-2 text-sm font-semibold"><Wrench size={17} className="text-[#5DD62C]" /> Skills and tools *</h2><p className="text-xs text-slate-400">Add at least one skill. More skills usually improve matching.</p><div className="flex gap-2"><input className={inputClass} value={skillInput} onChange={e => setSkillInput(e.target.value)} placeholder="e.g. Python, React, UI design" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addItem(skillInput, skills, setSkills, () => setSkillInput('')); } }} /><button type="button" onClick={() => addItem(skillInput, skills, setSkills, () => setSkillInput(''))} className="rounded-xl bg-white/10 px-4 text-sm hover:bg-white/15"><Plus size={17} /></button></div><div className="flex flex-wrap gap-2">{skills.map(skill => <span key={skill} className="inline-flex items-center gap-2 rounded-lg border border-[#5DD62C]/20 bg-[#5DD62C]/10 px-3 py-1.5 text-xs text-[#B8F5A4]">{skill}<button type="button" aria-label={`Remove ${skill}`} onClick={() => setSkills(skills.filter(s => s !== skill))}><X size={13} /></button></span>)}</div></section>
