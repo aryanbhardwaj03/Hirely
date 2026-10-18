@@ -1,13 +1,31 @@
+
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { Mail, Clock, Check, BellRing, Eye } from 'lucide-react';
+import { Mail, BellRing, Eye } from 'lucide-react';
+
+const formatDateTime = (value?: string | null): string => {
+  if (!value) return 'Not scheduled';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleString('en-IN', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  });
+};
 
 export const EmailAutomationCard: React.FC = () => {
-  const { 
-    emailConfig, 
-    updateEmailConfig, 
+  const {
+    emailConfig,
+    updateEmailConfig,
     setIsEmailPreviewOpen,
-    profile 
+    profile,
   } = useApp();
 
   return (
@@ -20,20 +38,25 @@ export const EmailAutomationCard: React.FC = () => {
               Email Automation
             </h3>
           </div>
-          <span className="font-mono text-[10px] text-[#5DD62C] bg-[#5DD62C]/10 px-2.5 py-0.5 rounded-full border border-[#5DD62C]/30 font-semibold" title="SMTP Backend contract pending deployment by teammate">
+          <span
+            className="font-mono text-[10px] text-[#5DD62C] bg-[#5DD62C]/10 px-2.5 py-0.5 rounded-full border border-[#5DD62C]/30 font-semibold"
+            title="SMTP backend status"
+          >
             SMTP PRIMED
           </span>
         </div>
 
         <div className="space-y-3">
-          {/* Next Digest & Last Sent */}
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08]">
               <div className="text-[11px] font-mono uppercase text-slate-300 font-medium">
                 Next Digest
               </div>
-              <div className="text-xs font-semibold text-white mt-1 truncate">
-                {emailConfig.nextScheduledAt}
+              <div
+                className="text-xs font-semibold text-white mt-1"
+                title={emailConfig.nextScheduledAt || 'Not scheduled'}
+              >
+                {formatDateTime(emailConfig.nextScheduledAt)}
               </div>
             </div>
 
@@ -41,13 +64,17 @@ export const EmailAutomationCard: React.FC = () => {
               <div className="text-[11px] font-mono uppercase text-slate-300 font-medium">
                 Last Briefing Sent
               </div>
-              <div className="text-xs font-semibold text-slate-300 mt-1 truncate">
-                {emailConfig.lastSentAt || 'None sent yet'}
+              <div
+                className="text-xs font-semibold text-slate-300 mt-1"
+                title={emailConfig.lastSentAt || 'None sent yet'}
+              >
+                {emailConfig.lastSentAt
+                  ? formatDateTime(emailConfig.lastSentAt)
+                  : 'None sent yet'}
               </div>
             </div>
           </div>
 
-          {/* Toggle for Deadline Reminders */}
           <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/[0.08]">
             <div className="flex items-center gap-2">
               <BellRing className="w-4 h-4 text-[#5DD62C]" />
@@ -56,15 +83,22 @@ export const EmailAutomationCard: React.FC = () => {
               </span>
             </div>
             <button
-              onClick={() => updateEmailConfig({ sendDeadlineAlerts: !emailConfig.sendDeadlineAlerts })}
+              onClick={() =>
+                updateEmailConfig({
+                  sendDeadlineAlerts: !emailConfig.sendDeadlineAlerts,
+                })
+              }
               className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer ${
                 emailConfig.sendDeadlineAlerts ? 'bg-[#5DD62C]' : 'bg-white/10'
               }`}
               aria-label="Toggle deadline alerts"
+              aria-pressed={emailConfig.sendDeadlineAlerts}
             >
               <div
                 className={`w-4 h-4 rounded-full bg-black shadow-md transition-transform ${
-                  emailConfig.sendDeadlineAlerts ? 'translate-x-4' : 'translate-x-0'
+                  emailConfig.sendDeadlineAlerts
+                    ? 'translate-x-4'
+                    : 'translate-x-0'
                 }`}
               />
             </button>
@@ -72,7 +106,6 @@ export const EmailAutomationCard: React.FC = () => {
         </div>
       </div>
 
-      {/* Action to preview email */}
       <div className="pt-3 border-t border-white/[0.08] mt-3 flex items-center justify-between">
         <span className="text-xs font-mono text-slate-300 truncate max-w-[190px]">
           Target: {profile.email}
