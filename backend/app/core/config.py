@@ -50,6 +50,18 @@ class Settings(BaseSettings):
     # Smart mock fallback when TINYFISH_API_KEY is not set or network fails
     ENABLE_MOCK_FALLBACK: bool = True
 
+    # SMTP Email Configuration
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_TLS: bool = True
+    SMTP_SSL: bool = False
+    SMTP_ENABLED: bool = True
+    EMAILS_FROM_EMAIL: str = "notifications@hirely.ai"
+    EMAILS_FROM_NAME: str = "Hirely AI"
+    SEND_WELCOME_EMAIL_ON_SIGNUP: bool = True
+
     model_config = SettingsConfigDict(
         env_file=[str(p) for p in env_candidates],
         env_file_encoding="utf-8",
