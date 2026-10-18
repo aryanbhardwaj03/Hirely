@@ -1,4 +1,5 @@
 import { StudentProfile, Opportunity } from '../types/opportunity';
+import { getCurrentAuthToken } from './firebase';
 
 export interface ChatMessage {
   id: string;
@@ -12,131 +13,103 @@ export interface ChatMessage {
 export interface HirelyCoreRequest {
   messages: { role: 'user' | 'assistant'; content: string }[];
   userProfile: StudentProfile;
-  opportunities: Opportunity[];
+  userId?: string | number;
+  opportunities?: Opportunity[];
   selectedOpportunity?: Opportunity | null;
-  action?: string;
-  customText?: string;
 }
 
 export interface HirelyCoreResponse {
   reply: string;
-  modelUsed: string;
-  isFallback: boolean;
+  modelUsed?: string;
+  isFallback?: boolean;
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
+/**
+ * Sends chat prompt to FastAPI backend at POST /api/chat
+ * The backend handles all Gemini API execution using server-side GEMINI_API_KEY.
+ * No API keys are read, stored, or exposed in the frontend.
+ */
 export async function askHirelyCore(request: HirelyCoreRequest): Promise<HirelyCoreResponse> {
+  const { messages, userProfile, userId, selectedOpportunity } = request;
+  const lastMessage = messages[messages.length - 1]?.content || '';
+
+  // Format conversation history for the backend
+  const history = messages.slice(0, -1).map((m) => ({
+    role: m.role,
+    content: m.content,
+  }));
+
+  // Contextual enrichment if user has selected a specific opportunity
+  let augmentedMessage = lastMessage;
+  if (selectedOpportunity && !lastMessage.toLowerCase().includes(selectedOpportunity.title.toLowerCase())) {
+    augmentedMessage = `[Opportunity Context: ${selectedOpportunity.title} at ${selectedOpportunity.organization} (${selectedOpportunity.location}, Stipend: ${selectedOpportunity.stipendOrAward}, Deadline: ${selectedOpportunity.deadlineFormatted})]\n${lastMessage}`;
+  }
+
+  // Contract: POST {VITE_API_BASE_URL}/api/chat
+  const targetUrl = API_BASE_URL ? `${API_BASE_URL}/api/chat` : '/api/chat';
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+
+  // Attach Firebase ID token if authenticated
+  const token = await getCurrentAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const payload = {
+    message: augmentedMessage,
+    history,
+    user_id: userId || userProfile.email || 1,
+  };
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout for LLM inference
+
   try {
-    const res = await fetch('/api/hirely-core', {
+    const res = await fetch(targetUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
+      headers,
+      body: JSON.stringify(payload),
+      signal: controller.signal,
     });
 
-    if (res.ok) {
-      const data = await res.json();
-      return {
-        reply: data.reply,
-        modelUsed: data.modelUsed || 'gemini-3.8-flash',
-        isFallback: Boolean(data.isFallback),
-      };
-    }
-  } catch (err) {
-    console.warn('Backend Hirely Core proxy unavailable, activating client-side intelligence fallback:', err);
-  }
+    clearTimeout(timeoutId);
 
-  // Graceful client-side fallback if server endpoint is offline
-  return generateIntelligentFallback(request);
-}
-
-function generateIntelligentFallback(request: HirelyCoreRequest): HirelyCoreResponse {
-  const { messages, userProfile, opportunities, selectedOpportunity } = request;
-  const lastUserMsg = messages[messages.length - 1]?.content.toLowerCase() || '';
-
-  // 1. Match explanation
-  if (selectedOpportunity || lastUserMsg.includes('match') || lastUserMsg.includes('why')) {
-    const opp = selectedOpportunity || opportunities[0];
-    if (opp) {
-      const userSkills = new Set(userProfile.skills.map(s => s.toLowerCase()));
-      const matchingSkills = opp.required_skills.filter(s => userSkills.has(s.toLowerCase()));
-      const missingSkills = opp.required_skills.filter(s => !userSkills.has(s.toLowerCase()));
-
-      let reply = `## Match Assessment for ${opp.title} at ${opp.organization}\n\n`;
-      reply += `**Overall Match Score:** ${opp.match_score}%\n\n`;
-      reply += `**Why This Fits Your Profile:**\n`;
-      if (matchingSkills.length > 0) {
-        reply += `* You meet the core required skills: **${matchingSkills.join(', ')}** based on your verified ${userProfile.degree} coursework.\n`;
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new Error(
+          `The backend chat endpoint (${targetUrl}) returned 404 Not Found. Please ensure the Python FastAPI backend has the /api/chat router registered.`
+        );
       }
-      reply += `* Work mode is **${opp.workArrangement}** (${opp.location}), which aligns with your preference.\n`;
-      reply += `* Stipend & Award: **${opp.stipendOrAward}**.\n\n`;
-
-      if (missingSkills.length > 0) {
-        reply += `**Recommended Priority Skills to Add:**\n`;
-        missingSkills.forEach(skill => {
-          reply += `* **${skill}**: Build a concrete mini-project or review core concepts before applying.\n`;
-        });
-        reply += `\n`;
-      }
-
-      reply += `**Application Deadline:** ${opp.deadlineFormatted} (${opp.daysLeft !== null ? `${opp.daysLeft} days remaining` : 'Rolling admissions'}).\n\n`;
-      reply += `**Next Actionable Step:** Verify your resume includes links to your GitHub and projects showcasing **${matchingSkills[0] || 'Python'}**, then submit directly on the [Official Application Portal](${opp.url}).`;
-
-      return {
-        reply,
-        modelUsed: 'hirely-deterministic-engine',
-        isFallback: true,
-      };
+      const errorData = await res.json().catch(() => null);
+      throw new Error(
+        errorData?.detail || errorData?.message || `Backend service error (HTTP ${res.status}).`
+      );
     }
-  }
 
-  // 2. Skill gap / learning roadmap
-  if (lastUserMsg.includes('skill') || lastUserMsg.includes('learn') || lastUserMsg.includes('roadmap')) {
-    const allRequiredSkills = Array.from(new Set(opportunities.flatMap(o => o.required_skills)));
-    const userSkills = new Set(userProfile.skills.map(s => s.toLowerCase()));
-    const unacquired = allRequiredSkills.filter(s => !userSkills.has(s.toLowerCase())).slice(0, 4);
+    const data = await res.json();
+    const replyText = data.reply || data.response || data.message || data.answer;
 
-    let reply = `## Skills Gap & Learning Strategy for ${userProfile.name}\n\n`;
-    reply += `Based on the latest **${opportunities.length} live opportunities** discovered across Delhi/NCR and Global Remote:\n\n`;
-    reply += `**Your Strong Foundation:**\n`;
-    userProfile.skills.slice(0, 4).forEach(s => {
-      reply += `* **${s}** — high market demand across AI and systems engineering roles.\n`;
-    });
-    reply += `\n**Top 3 High-Yield Skills to Acquire:**\n`;
-    unacquired.forEach((s, idx) => {
-      reply += `${idx + 1}. **${s}**: Appears frequently in senior research and infrastructure postings like Google DeepMind and Microsoft IDC.\n`;
-    });
-    reply += `\n**Weekly Action Plan:**\n`;
-    reply += `* **Days 1–3**: Implement a distributed worker or async pipeline using ${unacquired[0] || 'Distributed Systems'}.\n`;
-    reply += `* **Days 4–6**: Connect an AI inference endpoint with streaming tokens.\n`;
-    reply += `* **Day 7**: Polish documentation and push to public GitHub.`;
+    if (!replyText) {
+      throw new Error('Received an invalid or empty response from the backend chat service.');
+    }
 
     return {
-      reply,
-      modelUsed: 'hirely-deterministic-engine',
-      isFallback: true,
+      reply: replyText,
+      modelUsed: data.model_used || data.model || 'gemini-3.8-flash',
+      isFallback: data.model_used === 'hirely-local-reasoning' || Boolean(data.is_fallback),
     };
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Hirely Core request timed out. Please check your backend connection and try again.');
+    }
+    // Re-throw genuine backend or network failure without fabricating fake AI response
+    throw new Error(err.message || 'Unable to connect to Hirely Core chat service.');
   }
-
-  // 3. General overview
-  const topOpp = opportunities[0];
-  let reply = `## Hello ${userProfile.name.split(' ')[0]}! I'm Hirely Core.\n\n`;
-  reply += `I have indexed your talent profile (**${userProfile.degree}** in **${userProfile.fieldOfStudy}**) and **${opportunities.length} verified live opportunities**.\n\n`;
-  reply += `**Highlights for your profile today:**\n`;
-  if (topOpp) {
-    reply += `* Top Match: **${topOpp.title}** at **${topOpp.organization}** with **${topOpp.match_score}% match**.\n`;
-  }
-  reply += `* Target Location: **${userProfile.location}**.\n`;
-  reply += `* Active Applications: You have applications currently tracked in your pipeline.\n\n`;
-  reply += `**How can I assist you right now?**\n`;
-  reply += `* Ask: *"Analyze my top matches in Delhi/NCR"*\n`;
-  reply += `* Ask: *"What skills should I learn for Google DeepMind?"*\n`;
-  reply += `* Ask: *"Review my eligibility for the MIT Hackathon"*\n`;
-  reply += `* Or paste any job description to extract structured requirements.`;
-
-  return {
-    reply,
-    modelUsed: 'hirely-deterministic-engine',
-    isFallback: true,
-  };
 }

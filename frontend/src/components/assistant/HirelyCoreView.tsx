@@ -25,7 +25,7 @@ interface HirelyCoreViewProps {
 }
 
 export const HirelyCoreView: React.FC<HirelyCoreViewProps> = ({ embedded = false, onClose }) => {
-  const { profile, opportunities, selectedOpportunity, setSelectedOpportunity } = useApp();
+  const { profile, opportunities, selectedOpportunity, setSelectedOpportunity, currentUser } = useApp();
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
@@ -81,6 +81,7 @@ export const HirelyCoreView: React.FC<HirelyCoreViewProps> = ({ embedded = false
       const response = await askHirelyCore({
         messages: historyPayload,
         userProfile: profile,
+        userId: currentUser?.uid || profile.email || 1,
         opportunities,
         selectedOpportunity: contextOpp,
       });

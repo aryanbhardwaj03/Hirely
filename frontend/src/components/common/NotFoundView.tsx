@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { useNavigate } from 'react-router-dom';
 import { Compass, ArrowLeft, LayoutDashboard, Radio } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -10,12 +11,14 @@ interface NotFoundViewProps {
 
 export const NotFoundView: React.FC<NotFoundViewProps> = ({ onReturnHome, onGoBack }) => {
   const { setActiveTab } = useApp();
+  const navigate = useNavigate();
 
   const handleReturnDashboard = () => {
+    setActiveTab('dashboard');
     if (onReturnHome) {
       onReturnHome();
     } else {
-      setActiveTab('dashboard');
+      navigate('/dashboard');
     }
   };
 
@@ -23,9 +26,10 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({ onReturnHome, onGoBa
     if (onGoBack) {
       onGoBack();
     } else if (window.history.length > 1) {
-      window.history.back();
+      navigate(-1);
     } else {
       setActiveTab('dashboard');
+      navigate('/dashboard');
     }
   };
 
@@ -53,7 +57,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({ onReturnHome, onGoBa
             Opportunity Frequency Lost
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-sm mx-auto">
-            The spatial coordinates or page frequency you requested does not exist, has expired, or has shifted out of range.
+            The spatial coordinates or URL path you requested does not exist or has expired.
           </p>
         </div>
 
@@ -64,7 +68,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({ onReturnHome, onGoBa
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#F8F8F8] text-[#0F0F0F] hover:bg-[#5DD62C] font-semibold text-xs sm:text-sm transition-all cursor-pointer shadow-lg hover:shadow-[0_0_20px_rgba(93,214,44,0.4)]"
           >
             <LayoutDashboard className="w-4 h-4" />
-            <span>Return to Dashboard</span>
+            <span>Back to dashboard</span>
           </button>
           <button
             onClick={handleBack}
@@ -77,7 +81,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({ onReturnHome, onGoBa
 
         {/* Bottom subtle metadata */}
         <div className="pt-4 border-t border-white/[0.06] text-[11px] font-mono text-slate-400">
-          HIRELY SPATIAL SYSTEM PROTOCOL · VERIFIED
+          HIRELY SPATIAL SYSTEM PROTOCOL · 404 ROUTE
         </div>
       </div>
     </div>

@@ -22,6 +22,11 @@ from app.schemas.tracker import (
     TrackerStatusUpdate,
     TrackerItemResponse
 )
+from app.schemas.chat import (
+    ChatRequest,
+    ChatResponse,
+    ChatMessageItem
+)
 
 __all__ = [
     "UserProfileCreate",
@@ -39,5 +44,8 @@ __all__ = [
     "SummaryResponse",
     "TrackerItemCreate",
     "TrackerStatusUpdate",
-    "TrackerItemResponse"
+    "TrackerItemResponse",
+    "ChatRequest",
+    "ChatResponse",
+    "ChatMessageItem"
 ]

@@ -3,6 +3,11 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  sendEmailVerification,
+  updateProfile as updateFirebaseProfile,
   signOut,
   onAuthStateChanged,
   User,
@@ -33,7 +38,7 @@ try {
     auth = getAuth(app);
   }
 } catch (err) {
-  console.warn('Firebase initialization note: using fallback auth state until production credentials are configured.', err);
+  console.warn('Firebase initialization note:', err);
 }
 
 const googleProvider = new GoogleAuthProvider();
@@ -41,13 +46,35 @@ googleProvider.setCustomParameters({
   prompt: 'select_account',
 });
 
-// Stored Demo User session key
-const DEMO_USER_STORAGE_KEY = 'hirely_auth_user_session';
+function mapFirebaseError(error: any): string {
+  const code = error?.code || '';
+  switch (code) {
+    case 'auth/user-not-found':
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+      return 'Incorrect email or password. Please try again.';
+    case 'auth/email-already-in-use':
+      return 'An account with this email address already exists. Please sign in instead.';
+    case 'auth/weak-password':
+      return 'Password is too weak. Please use at least 6 characters.';
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address.';
+    case 'auth/too-many-requests':
+      return 'Access temporarily disabled due to multiple failed attempts. Please reset your password or try again later.';
+    case 'auth/popup-closed-by-user':
+      return 'Sign-in window was closed before completing authentication.';
+    case 'auth/cancelled-popup-request':
+      return 'A sign-in request is already in progress.';
+    case 'auth/unauthorized-domain':
+      return 'This app domain is not authorized in your Firebase console. Please add it under Authentication > Settings > Authorized Domains.';
+    default:
+      return error?.message || 'Authentication failed. Please verify your connection and try again.';
+  }
+}
 
 export async function loginWithGoogle(): Promise<{ user: AuthUser; token: string }> {
   if (!auth || !isFirebaseConfigured()) {
-    // If Firebase credentials are not yet set in .env, perform a guided fallback login
-    throw new Error('FIREBASE_CONFIG_MISSING');
+    throw new Error('Firebase configuration is missing. Please set VITE_FIREBASE_API_KEY and VITE_FIREBASE_PROJECT_ID in your environment.');
   }
 
   try {
@@ -59,36 +86,86 @@ export async function loginWithGoogle(): Promise<{ user: AuthUser; token: string
       displayName: result.user.displayName,
       photoURL: result.user.photoURL,
     };
-    localStorage.setItem(DEMO_USER_STORAGE_KEY, JSON.stringify({ user: authUser, token }));
     return { user: authUser, token };
   } catch (error: any) {
-    if (error.code === 'auth/popup-closed-by-user') {
-      throw new Error('Sign-in was cancelled. Please try again.');
-    }
-    if (error.code === 'auth/cancelled-popup-request') {
-      throw new Error('Only one sign-in window can be active at a time.');
-    }
-    if (error.code === 'auth/unauthorized-domain') {
-      throw new Error('This domain is not authorized in your Firebase console. Please add it to Authorized Domains.');
-    }
-    throw new Error(error.message || 'Failed to authenticate with Google.');
+    throw new Error(mapFirebaseError(error));
   }
 }
 
-export async function demoLogin(
-  name = 'Alex Chen',
-  email = 'alex.chen@university.edu'
+export async function loginWithEmail(
+  email: string,
+  pass: string
 ): Promise<{ user: AuthUser; token: string }> {
-  const demoUser: AuthUser = {
-    uid: `demo-uid-${Date.now()}`,
-    email,
-    displayName: name,
-    photoURL: null,
-    isAnonymous: true,
-  };
-  const token = `hirely-demo-jwt-token-${demoUser.uid}`;
-  localStorage.setItem(DEMO_USER_STORAGE_KEY, JSON.stringify({ user: demoUser, token }));
-  return { user: demoUser, token };
+  if (!auth || !isFirebaseConfigured()) {
+    throw new Error('Firebase configuration is missing. Please set VITE_FIREBASE_API_KEY and VITE_FIREBASE_PROJECT_ID in your environment.');
+  }
+
+  try {
+    const result = await signInWithEmailAndPassword(auth, email.trim(), pass);
+    const token = await result.user.getIdToken();
+    const authUser: AuthUser = {
+      uid: result.user.uid,
+      email: result.user.email,
+      displayName: result.user.displayName,
+      photoURL: result.user.photoURL,
+    };
+    return { user: authUser, token };
+  } catch (error: any) {
+    throw new Error(mapFirebaseError(error));
+  }
+}
+
+export async function registerWithEmail(
+  email: string,
+  pass: string,
+  name?: string
+): Promise<{ user: AuthUser; token: string }> {
+  if (!auth || !isFirebaseConfigured()) {
+    throw new Error('Firebase configuration is missing. Please set VITE_FIREBASE_API_KEY and VITE_FIREBASE_PROJECT_ID in your environment.');
+  }
+
+  try {
+    const result = await createUserWithEmailAndPassword(auth, email.trim(), pass);
+
+    // Optionally update display name
+    if (name && name.trim()) {
+      try {
+        await updateFirebaseProfile(result.user, { displayName: name.trim() });
+      } catch (profileErr) {
+        console.warn('Could not set displayName on new user:', profileErr);
+      }
+    }
+
+    // Trigger email verification if supported
+    try {
+      await sendEmailVerification(result.user);
+    } catch (verifErr) {
+      console.warn('Email verification email could not be dispatched:', verifErr);
+    }
+
+    const token = await result.user.getIdToken();
+    const authUser: AuthUser = {
+      uid: result.user.uid,
+      email: result.user.email,
+      displayName: name?.trim() || result.user.displayName,
+      photoURL: result.user.photoURL,
+    };
+    return { user: authUser, token };
+  } catch (error: any) {
+    throw new Error(mapFirebaseError(error));
+  }
+}
+
+export async function sendPasswordReset(email: string): Promise<void> {
+  if (!auth || !isFirebaseConfigured()) {
+    throw new Error('Firebase configuration is missing. Please set VITE_FIREBASE_API_KEY and VITE_FIREBASE_PROJECT_ID in your environment.');
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, email.trim());
+  } catch (error: any) {
+    throw new Error(mapFirebaseError(error));
+  }
 }
 
 export async function logoutUser(): Promise<void> {
@@ -99,68 +176,41 @@ export async function logoutUser(): Promise<void> {
       console.warn('Firebase signOut error', e);
     }
   }
-  localStorage.removeItem(DEMO_USER_STORAGE_KEY);
 }
 
 export function subscribeToAuthChanges(
   callback: (user: AuthUser | null, token: string | null) => void
 ): () => void {
-  // If Firebase Auth is initialized, attach real listener
   if (auth && isFirebaseConfigured()) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: User | null) => {
       if (firebaseUser) {
-        const token = await firebaseUser.getIdToken();
-        const user: AuthUser = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL,
-        };
-        localStorage.setItem(DEMO_USER_STORAGE_KEY, JSON.stringify({ user, token }));
-        callback(user, token);
-      } else {
-        // Check if demo user stored
-        const stored = localStorage.getItem(DEMO_USER_STORAGE_KEY);
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            callback(parsed.user, parsed.token);
-            return;
-          } catch {
-            localStorage.removeItem(DEMO_USER_STORAGE_KEY);
-          }
+        try {
+          const token = await firebaseUser.getIdToken();
+          const user: AuthUser = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+          };
+          callback(user, token);
+        } catch {
+          callback(null, null);
         }
+      } else {
         callback(null, null);
       }
     });
     return unsubscribe;
   }
 
-  // Fallback: check localStorage for session
-  const stored = localStorage.getItem(DEMO_USER_STORAGE_KEY);
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      callback(parsed.user, parsed.token);
-    } catch {
-      callback(null, null);
-    }
-  } else {
-    // Default to active demo session so user can immediately experience the app, or prompt login
-    callback(null, null);
-  }
-
+  callback(null, null);
   return () => {};
 }
 
 export async function getCurrentAuthToken(): Promise<string | null> {
   if (auth && auth.currentUser) {
-    return await auth.currentUser.getIdToken();
-  }
-  const stored = localStorage.getItem(DEMO_USER_STORAGE_KEY);
-  if (stored) {
     try {
-      return JSON.parse(stored).token;
+      return await auth.currentUser.getIdToken();
     } catch {
       return null;
     }

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Dark Obsidian Void Background -->
+  <rect width="32" height="32" rx="8" fill="#0F0F0F"/>
+  <rect x="0.5" y="0.5" width="31" height="31" rx="7.5" stroke="#337418" stroke-opacity="0.8" stroke-width="1"/>
+  
+  <!-- Subtle Outer Radar Arc -->
+  <circle cx="16" cy="16" r="11" stroke="#337418" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>
+  
+  <!-- Hirely Spatial Compass Star / Rhombus -->
+  <path d="M16 6 L18.8 13.2 L26 16 L18.8 18.8 L16 26 L13.2 18.8 L6 16 L13.2 13.2 Z" 
+        fill="url(#beaconGrad)" 
+        stroke="#5DD62C" 
+        stroke-width="1.2" 
+        stroke-linejoin="round"/>
+        
+  <!-- Center Core Beacon -->
+  <circle cx="16" cy="16" r="2.5" fill="#FFFFFF"/>
+  <circle cx="16" cy="16" r="1.2" fill="#0F0F0F"/>
+
+  <!-- Live Opportunity Signal Dot -->
+  <circle cx="24" cy="8" r="2" fill="#5DD62C"/>
+  <circle cx="24" cy="8" r="3.2" stroke="#5DD62C" stroke-width="0.8" opacity="0.5"/>
+
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="beaconGrad" x1="6" y1="6" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#5DD62C"/>
+      <stop offset="50%" stopColor="#122A14"/>
+      <stop offset="100%" stopColor="#337418"/>
+    </linearGradient>
+  </defs>
+</svg>

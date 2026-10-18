@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp, ActiveTabType } from '../../context/AppContext';
 import {
   Compass,
@@ -51,8 +52,11 @@ export const Sidebar: React.FC = () => {
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (profile.profileCompletion / 100) * circumference;
 
+  const navigate = useNavigate();
+
   const handleNavClick = (tabId: ActiveTabType) => {
     setActiveTab(tabId);
+    navigate(tabId === 'dashboard' ? '/dashboard' : `/${tabId}`);
     if (isMobileMenuOpen) {
       setIsMobileMenuOpen(false);
     }

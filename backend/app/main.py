@@ -12,7 +12,8 @@ from app.routers import (
     search_router,
     recommendations_router,
     summary_router,
-    tracker_router
+    tracker_router,
+    chat_router
 )
 
 
@@ -73,6 +74,7 @@ app.include_router(search_router, prefix=settings.API_V1_STR)
 app.include_router(recommendations_router, prefix=settings.API_V1_STR)
 app.include_router(summary_router, prefix=settings.API_V1_STR)
 app.include_router(tracker_router, prefix=settings.API_V1_STR)
+app.include_router(chat_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/", tags=["Health"])
