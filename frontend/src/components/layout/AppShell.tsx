@@ -15,6 +15,7 @@ import { HirelyCoreView } from '../assistant/HirelyCoreView';
 import { HirelyCoreDrawer } from '../assistant/HirelyCoreDrawer';
 import { NotFoundView } from '../common/NotFoundView';
 import { SignInView } from '../auth/SignInView';
+import { OnboardingView } from '../onboarding/OnboardingView';
 import { OpportunityDetailDrawer } from '../opportunity/OpportunityDetailDrawer';
 import { DiscoveryModal } from '../dashboard/DiscoveryModal';
 import { EmailDigestModal } from '../email/EmailDigestModal';
@@ -37,6 +38,7 @@ export const AppShell: React.FC = () => {
   const {
     sidebarCollapsed,
     currentUser,
+    isProfileComplete,
     setIsHirelyCoreOpen,
     setActiveTab
   } = useApp();
@@ -69,6 +71,11 @@ export const AppShell: React.FC = () => {
     const normalizedPath = (location.pathname.replace(/\/+$/, '') || '/').toLowerCase();
     const isKnownRoute = KNOWN_ROUTES.includes(normalizedPath);
     return isKnownRoute ? <SignInView /> : <NotFoundView standalone />;
+  }
+
+  // First-time users must complete their own profile before seeing personalized content.
+  if (!isProfileComplete) {
+    return <OnboardingView />;
   }
 
   return (

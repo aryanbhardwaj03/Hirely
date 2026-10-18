@@ -11,10 +11,7 @@ import {
   AuthUser
 } from '../types/opportunity';
 import {
-  INITIAL_PROFILE,
-  INITIAL_OPPORTUNITIES,
-  INITIAL_APPLICATIONS,
-  INITIAL_EMAIL_CONFIG
+  INITIAL_OPPORTUNITIES
 } from '../data/opportunities';
 import {
   checkBackendHealth,
@@ -51,6 +48,7 @@ interface AppContextType {
   logout: () => Promise<void>;
   profile: StudentProfile;
   updateProfile: (updated: Partial<StudentProfile>) => void;
+  isProfileComplete: boolean;
   opportunities: Opportunity[];
   savedOpportunityIds: string[];
   toggleSaveOpportunity: (id: string) => void;
@@ -104,6 +102,33 @@ const STORAGE_KEY_SAVED = 'hirely_saved_ids_v1';
 const STORAGE_KEY_APPLICATIONS = 'hirely_applications_v1';
 const STORAGE_KEY_EMAIL = 'hirely_email_config_v1';
 
+const createBlankProfile = (user?: AuthUser | null): StudentProfile => ({
+  name: user?.displayName || '',
+  email: user?.email || '',
+  degree: '',
+  fieldOfStudy: '',
+  year: 0,
+  university: '',
+  skills: [],
+  interests: [],
+  location: '',
+  preferredCategories: ['internship', 'scholarship', 'hackathon', 'fellowship'],
+  remotePreference: true,
+  emailDigest: true,
+  digestFrequency: 'daily',
+  deadlineAlerts: true,
+  profileCompletion: 0,
+});
+
+const readUserStorage = <T,>(key: string, uid: string, fallback: T): T => {
+  try {
+    const stored = localStorage.getItem(`${key}:${uid}`);
+    return stored ? JSON.parse(stored) as T : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeTab, setActiveTab] = useState<ActiveTabType>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -118,48 +143,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [sortBy, setSortBy] = useState<OpportunitySortOption>('newest');
   const [locationScope, setLocationScope] = useState<LocationScope>('delhi_ncr');
 
-  // Profile State
-  const [profile, setProfile] = useState<StudentProfile>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY_PROFILE);
-      return stored ? JSON.parse(stored) : INITIAL_PROFILE;
-    } catch {
-      return INITIAL_PROFILE;
-    }
+  // Start blank. User-specific data is loaded only after Firebase identifies the account.
+  const [profile, setProfile] = useState<StudentProfile>(() => createBlankProfile());
+  const [savedOpportunityIds, setSavedOpportunityIds] = useState<string[]>([]);
+  const [applications, setApplications] = useState<ApplicationItem[]>([]);
+  const [emailConfig, setEmailConfig] = useState<EmailDigestConfig>({
+    email: '', enabled: true, frequency: 'daily',
+    categories: ['internship', 'scholarship', 'hackathon', 'fellowship'],
+    includeMatchReason: true, sendDeadlineAlerts: true,
+    lastSentAt: null, nextScheduledAt: new Date().toISOString(),
   });
 
-  // Opportunities State
+  // Opportunities are shared discovery data, not personal account data.
   const [opportunities, setOpportunities] = useState<Opportunity[]>(INITIAL_OPPORTUNITIES);
-
-  // Saved Opportunities IDs
-  const [savedOpportunityIds, setSavedOpportunityIds] = useState<string[]>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY_SAVED);
-      return stored ? JSON.parse(stored) : ['opp-1', 'opp-delhi-1', 'opp-3'];
-    } catch {
-      return ['opp-1', 'opp-delhi-1', 'opp-3'];
-    }
-  });
-
-  // Applications State
-  const [applications, setApplications] = useState<ApplicationItem[]>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY_APPLICATIONS);
-      return stored ? JSON.parse(stored) : INITIAL_APPLICATIONS;
-    } catch {
-      return INITIAL_APPLICATIONS;
-    }
-  });
-
-  // Email Config State
-  const [emailConfig, setEmailConfig] = useState<EmailDigestConfig>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY_EMAIL);
-      return stored ? JSON.parse(stored) : INITIAL_EMAIL_CONFIG;
-    } catch {
-      return INITIAL_EMAIL_CONFIG;
-    }
-  });
 
   // UI state
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
@@ -192,14 +188,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  // Listen to Firebase / Demo auth state on startup
+  // Load each account's own data when Firebase auth changes. Never reuse demo profile data.
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user, token) => {
       setCurrentUser(user);
       setAuthToken(token);
-      if (user?.displayName && !profile.name) {
-        setProfile(prev => ({ ...prev, name: user.displayName || prev.name, email: user.email || prev.email }));
+      if (!user) {
+        setProfile(createBlankProfile());
+        setSavedOpportunityIds([]);
+        setApplications([]);
+        setEmailConfig({
+          email: '', enabled: true, frequency: 'daily',
+          categories: ['internship', 'scholarship', 'hackathon', 'fellowship'],
+          includeMatchReason: true, sendDeadlineAlerts: true,
+          lastSentAt: null, nextScheduledAt: new Date().toISOString(),
+        });
+        return;
       }
+      const uid = user.uid;
+      const loadedProfile = readUserStorage(STORAGE_KEY_PROFILE, uid, createBlankProfile(user));
+      // Firebase email is authoritative; profile email is prefilled only for a new profile.
+      if (!loadedProfile.email) loadedProfile.email = user.email || '';
+      if (!loadedProfile.name && user.displayName) loadedProfile.name = user.displayName;
+      setProfile(loadedProfile);
+      setSavedOpportunityIds(readUserStorage(STORAGE_KEY_SAVED, uid, []));
+      setApplications(readUserStorage(STORAGE_KEY_APPLICATIONS, uid, []));
+      setEmailConfig(readUserStorage(STORAGE_KEY_EMAIL, uid, {
+        email: user.email || '', enabled: true, frequency: 'daily',
+        categories: ['internship', 'scholarship', 'hackathon', 'fellowship'],
+        includeMatchReason: true, sendDeadlineAlerts: true,
+        lastSentAt: null, nextScheduledAt: new Date().toISOString(),
+      }));
     });
     return () => unsubscribe();
   }, []);
@@ -221,22 +240,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   }, []);
 
-  // Sync state to localStorage
+  // Persist personal data only under the authenticated Firebase UID.
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(profile));
-  }, [profile]);
+    if (currentUser) localStorage.setItem(`${STORAGE_KEY_PROFILE}:${currentUser.uid}`, JSON.stringify(profile));
+  }, [profile, currentUser]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_SAVED, JSON.stringify(savedOpportunityIds));
-  }, [savedOpportunityIds]);
+    if (currentUser) localStorage.setItem(`${STORAGE_KEY_SAVED}:${currentUser.uid}`, JSON.stringify(savedOpportunityIds));
+  }, [savedOpportunityIds, currentUser]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_APPLICATIONS, JSON.stringify(applications));
-  }, [applications]);
+    if (currentUser) localStorage.setItem(`${STORAGE_KEY_APPLICATIONS}:${currentUser.uid}`, JSON.stringify(applications));
+  }, [applications, currentUser]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_EMAIL, JSON.stringify(emailConfig));
-  }, [emailConfig]);
+    if (currentUser) localStorage.setItem(`${STORAGE_KEY_EMAIL}:${currentUser.uid}`, JSON.stringify(emailConfig));
+  }, [emailConfig, currentUser]);
+
+  const isProfileComplete = Boolean(
+    profile.name.trim() && profile.university.trim() && profile.degree.trim() &&
+    profile.fieldOfStudy.trim() && profile.year >= 1 && profile.location.trim() &&
+    profile.skills.some(skill => skill.trim().length > 0)
+  );
 
   // Logout handler
   const logout = useCallback(async () => {
@@ -377,6 +402,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     logout,
     profile,
     updateProfile,
+    isProfileComplete,
     opportunities,
     savedOpportunityIds,
     toggleSaveOpportunity,
@@ -420,6 +446,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     logout,
     profile,
     updateProfile,
+    isProfileComplete,
     opportunities,
     savedOpportunityIds,
     toggleSaveOpportunity,
