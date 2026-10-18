@@ -10,7 +10,9 @@ import {
   ArrowUpRight,
   ShieldCheck,
   Building,
-  Radio
+  Radio,
+  Kanban,
+  Check
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -27,10 +29,15 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
     setSelectedOpportunity,
     toggleSaveOpportunity,
     isOpportunitySaved,
+    addToPipeline,
+    isOpportunityInPipeline,
+    getOpportunityPipelineStatus,
     setIsHirelyCoreOpen
   } = useApp();
 
   const isSaved = isOpportunitySaved(opportunity.id);
+  const inPipeline = isOpportunityInPipeline(opportunity.id);
+  const pipelineStatus = getOpportunityPipelineStatus(opportunity.id);
 
   const getCategoryBadgeClass = (category: string) => {
     switch (category) {
@@ -176,23 +183,48 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
           </span>
         </div>
 
-        <div className="flex items-center gap-2 w-full">
+        <div className="flex items-center gap-1.5 w-full">
           <button
             onClick={() => setSelectedOpportunity(opportunity)}
-            className="px-3 py-2 rounded-xl text-xs font-medium text-slate-200 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.1] transition-colors cursor-pointer shrink-0"
+            className="px-2.5 py-2 rounded-xl text-xs font-medium text-slate-200 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.1] transition-colors cursor-pointer shrink-0"
+            title="View full opportunity details"
           >
             Details
           </button>
 
-          {/* Apply Now button: solid #F8F8F8 with #0F0F0F text, turns #5DD62C on hover with 300ms transition */}
+          {inPipeline ? (
+            <button
+              onClick={() => setSelectedOpportunity(opportunity)}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-[#5DD62C]/15 border border-[#5DD62C]/40 text-[#5DD62C] text-xs font-semibold transition-all cursor-pointer truncate"
+              title={`Currently in your Application Pipeline (Stage: ${pipelineStatus?.toUpperCase()})`}
+            >
+              <Check className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate capitalize">{pipelineStatus || 'In Pipeline'}</span>
+            </button>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                addToPipeline(opportunity.id);
+              }}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-white/[0.05] hover:bg-[#5DD62C]/20 border border-white/[0.12] hover:border-[#5DD62C]/50 text-[#F8F8F8] hover:text-[#5DD62C] text-xs font-semibold transition-all cursor-pointer truncate"
+              title="Add to Application Pipeline under Matched"
+            >
+              <Kanban className="w-3.5 h-3.5 shrink-0 text-[#5DD62C]" />
+              <span className="truncate">Add to Pipeline</span>
+            </button>
+          )}
+
+          {/* Apply Now button: opens real listing URL in a new tab */}
           <a
             href={opportunity.url}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl bg-[#F8F8F8] text-[#0F0F0F] hover:bg-[#5DD62C] hover:shadow-[0_0_18px_rgba(93,214,44,0.4)] text-xs font-bold tracking-tight transition-all duration-300 cursor-pointer whitespace-nowrap"
+            className="flex items-center justify-center gap-1 py-2 px-3 rounded-xl bg-[#F8F8F8] text-[#0F0F0F] hover:bg-[#5DD62C] text-xs font-bold transition-all duration-300 cursor-pointer shrink-0"
+            title="Open official opportunity listing"
           >
-            <span>Apply Now</span>
+            <span>Apply</span>
             <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
           </a>
         </div>
