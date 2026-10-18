@@ -9,7 +9,13 @@
 Discover relevant opportunities, understand your fit, organize your applications, and manage your job search from one intelligent workspace.
 
 <p>
-  <a href="https://hirely-871878611397.asia-south2.run.app/"><img src="https://img.shields.io/badge/🚀%20Visit%20Live%20App-5DD62C?style=for-the-badge" alt="Visit the live app"></a>
+  <a href="https://hirely-871878611397.asia-south2.run.app/">
+    <img src="https://img.shields.io/badge/🚀_Visit_Live_App-5DD62C?style=for-the-badge" alt="Visit Live App">
+  </a>
+  &nbsp;
+  <a href="https://youtu.be/wb7zaWtM7qE">
+    <img src="https://img.shields.io/badge/▶_Watch_Demo-FF0033?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch Hirely Demo">
+  </a>
 </p>
 
 <p>
