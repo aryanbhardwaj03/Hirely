@@ -2,7 +2,7 @@ import { EmailDigestConfig, Opportunity } from '../types/opportunity';
 
 /**
  * Dedicated Email Service Adapter for Hirely
- * Prepared for pending SMTP backend integration from teammate.
+ * Prepared for the backend email provider integration.
  * Preserves separation between UI preferences and actual delivery logic.
  */
 
@@ -27,10 +27,10 @@ export interface EmailDispatchResult {
 }
 
 /**
- * Checks if the backend SMTP service endpoint is configured.
+ * Checks if the backend email service endpoint is configured.
  */
 export function isSmtpBackendAvailable(): boolean {
-  // Marked as pending until backend teammate supplies the finalized SMTP route
+  // The frontend adapter remains conservative until a user profile ID is available.
   return false;
 }
 
@@ -39,11 +39,11 @@ export function isSmtpBackendAvailable(): boolean {
  * Kept pending to avoid fake delivery claims before backend deployment.
  */
 export async function scheduleEmailNotification(payload: ScheduleEmailPayload): Promise<EmailDispatchResult> {
-  // Explicitly note that SMTP backend contract is currently pending deployment by backend teammate
+  // An application confirmation requires a persisted backend profile and tracker item.
   return {
     success: false,
     status: 'pending_backend_contract',
-    statusText: `SMTP notification adapter ready for ${payload.email} — awaiting finalized backend contract.`,
+    statusText: `Email notification adapter ready for ${payload.email} — backend profile link required.`,
   };
 }
 
@@ -58,6 +58,6 @@ export async function sendDigestEmail(
   return {
     success: false,
     status: 'pending_backend_contract',
-    statusText: `Email delivery adapter primed for ${config.email} (${topOpportunities.length} opportunities) — awaiting backend SMTP deployment.`,
+    statusText: `Email delivery adapter primed for ${config.email} (${topOpportunities.length} opportunities) — backend profile link required.`,
   };
 }

@@ -27,6 +27,13 @@ from app.schemas.chat import (
     ChatResponse,
     ChatMessageItem
 )
+from app.schemas.email import (
+    EmailSendResponse,
+    TestEmailRequest,
+    SendWelcomeEmailRequest,
+    SendOpportunityEmailRequest,
+    EmailBatchResponse
+)
 
 __all__ = [
     "UserProfileCreate",
@@ -47,5 +54,10 @@ __all__ = [
     "TrackerItemResponse",
     "ChatRequest",
     "ChatResponse",
-    "ChatMessageItem"
+    "ChatMessageItem",
+    "EmailSendResponse",
+    "TestEmailRequest",
+    "SendWelcomeEmailRequest",
+    "SendOpportunityEmailRequest",
+    "EmailBatchResponse"
 ]

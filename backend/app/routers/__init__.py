@@ -4,6 +4,7 @@ from app.routers.recommendations import router as recommendations_router
 from app.routers.summary import router as summary_router
 from app.routers.tracker import router as tracker_router
 from app.routers.chat import router as chat_router
+from app.routers.email import router as email_router
 
 __all__ = [
     "profile_router",
@@ -11,5 +12,6 @@ __all__ = [
     "recommendations_router",
     "summary_router",
     "tracker_router",
-    "chat_router"
+    "chat_router",
+    "email_router"
 ]

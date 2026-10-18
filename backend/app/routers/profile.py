@@ -1,9 +1,10 @@
 import re
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.models.user_profile import UserProfile
 from app.schemas.user_profile import (
@@ -13,6 +14,7 @@ from app.schemas.user_profile import (
     ResumeParseRequest,
     ResumeParseResponse
 )
+from app.services.email_service import email_service
 
 router = APIRouter(prefix="/profile", tags=["User Profiles"])
 
@@ -20,6 +22,8 @@ router = APIRouter(prefix="/profile", tags=["User Profiles"])
 @router.post("", response_model=UserProfileResponse, status_code=status.HTTP_201_CREATED)
 async def create_profile(
     profile_in: UserProfileCreate,
+    background_tasks: BackgroundTasks,
+    send_welcome: bool = True,
     db: AsyncSession = Depends(get_db)
 ):
     """Creates a new user profile with skills, experience, and target preferences."""
@@ -34,6 +38,11 @@ async def create_profile(
     db.add(profile)
     await db.commit()
     await db.refresh(profile)
+
+    # Automatically dispatch welcome email via SMTP in background task
+    if send_welcome and settings.SEND_WELCOME_EMAIL_ON_SIGNUP:
+        background_tasks.add_task(email_service.send_welcome_email, profile)
+
     return profile
 
 

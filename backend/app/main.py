@@ -13,7 +13,8 @@ from app.routers import (
     recommendations_router,
     summary_router,
     tracker_router,
-    chat_router
+    chat_router,
+    email_router
 )
 
 
@@ -75,6 +76,7 @@ app.include_router(recommendations_router, prefix=settings.API_V1_STR)
 app.include_router(summary_router, prefix=settings.API_V1_STR)
 app.include_router(tracker_router, prefix=settings.API_V1_STR)
 app.include_router(chat_router, prefix=settings.API_V1_STR)
+app.include_router(email_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/", tags=["Health"])
@@ -84,13 +86,15 @@ async def root():
         "service": settings.PROJECT_NAME,
         "version": settings.VERSION,
         "tinyfish_api_configured": bool(settings.TINYFISH_API_KEY),
+        "smtp_configured": bool(settings.SMTP_USER and settings.SMTP_PASSWORD),
         "docs_url": "/docs",
         "endpoints": {
             "profiles": f"{settings.API_V1_STR}/profile",
             "search": f"{settings.API_V1_STR}/search",
             "recommendations": f"{settings.API_V1_STR}/recommendations",
             "summary": f"{settings.API_V1_STR}/summary",
-            "tracker": f"{settings.API_V1_STR}/tracker"
+            "tracker": f"{settings.API_V1_STR}/tracker",
+            "email": f"{settings.API_V1_STR}/email"
         }
     }
 
@@ -99,5 +103,6 @@ async def root():
 async def health_check():
     return {
         "status": "healthy",
-        "tinyfish_mode": "Live API" if settings.TINYFISH_API_KEY else "Smart Mock & Fallback"
+        "tinyfish_mode": "Live API" if settings.TINYFISH_API_KEY else "Smart Mock & Fallback",
+        "smtp_mode": "Live SMTP" if (settings.SMTP_USER and settings.SMTP_PASSWORD) else "Smart Mock & Fallback"
     }

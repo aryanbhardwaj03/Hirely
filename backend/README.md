@@ -59,11 +59,24 @@ Copy `.env.example` to `.env`:
 cp .env.example .env
 ```
 
-Open `.env` and add your **TinyFish API key** (get one at [agent.tinyfish.ai/api-keys](https://agent.tinyfish.ai/api-keys)):
+Open `.env` and configure your API keys and SMTP settings:
 ```env
+# TinyFish AI API Key (Get one at https://agent.tinyfish.ai/api-keys)
 TINYFISH_API_KEY=your_tinyfish_api_key_here
+
+# SMTP Email Configuration (Gmail, SendGrid, Mailgun, Amazon SES, etc.)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
+SMTP_TLS=true
+SMTP_SSL=false
+SMTP_ENABLED=true
+EMAILS_FROM_EMAIL=notifications@hirely.ai
+EMAILS_FROM_NAME="Hirely AI"
+SEND_WELCOME_EMAIL_ON_SIGNUP=true
 ```
-> **Note:** If `TINYFISH_API_KEY` is left blank, the backend automatically runs in **Smart Mock & Demo Mode**, returning realistic opportunities so your frontend teammates can develop and demo without blockers!
+> **Note:** If `SMTP_USER` or `SMTP_PASSWORD` is left blank, the email system automatically runs in **Simulated / Mock Mode**, safely logging email deliveries to the console so local development and frontend demos work seamlessly without requiring live credentials!
 
 ### 4. Run the Backend Server
 ```bash
@@ -244,15 +257,39 @@ Summarizes pasted job or hackathon description text.
 
 ---
 
+### 6. SMTP Email Notifications & Opportunity Digests
+
+Hirely AI features an integrated SMTP email notification subsystem that generates modern HTML email templates and leverages **TinyFish live search** to match opportunities directly with user profiles.
+
+- **`GET /api/email/status`**: Check SMTP connectivity status, host/port, security mode (TLS/SSL), and active operational mode (`live` vs `simulated`).
+- **`POST /api/email/test`**: Send a test email to verify SMTP server credentials.
+  ```json
+  {
+    "recipient": "dev@example.com",
+    "subject": "Hirely AI SMTP Test",
+    "message": "Testing SMTP transmission."
+  }
+  ```
+- **`POST /api/email/welcome/{user_id}`**: Dispatches a personalized welcome onboarding email summarizing the candidate's skills, target role, and active AI co-pilot status.
+- **`POST /api/email/opportunities/{user_id}`**: Uses **TinyFish AI live search** and the matching algorithm to discover and email the top job, internship, and hackathon matches tailored to the user profile.
+  - Query parameters: `limit=5`, `use_tinyfish=true`, `opportunity_type=job|internship|hackathon`, `async_mode=false`.
+- **`POST /api/email/send-recommendations`**: Payload-based endpoint to trigger opportunity recommendation emails.
+- **`POST /api/email/digest-all`**: Sends individualized opportunity recommendation digests to all registered candidates.
+- **Automatic Welcome on Signup**: New profiles created via `POST /api/profile` automatically receive a welcome email in the background when `SEND_WELCOME_EMAIL_ON_SIGNUP=true`.
+
+---
+
 ## 🧪 Running Tests
 
-The backend includes an automated test suite verifying all endpoints, SQLite integration, TinyFish fallbacks, and matching scores:
+The backend includes a comprehensive automated test suite verifying all endpoints, SQLite integration, TinyFish live search & fallbacks, profile matching, and SMTP email services:
 
 ```bash
 pytest -v
 ```
 
-All 8 tests pass with 100% success rate.
+All 14 tests pass with 100% success rate:
+- `tests/test_api.py` (8 tests): Health checks, profile CRUD, resume parser, search, matching on the fly, summary, tracker
+- `tests/test_email.py` (6 tests): SMTP status, test email dispatch, welcome email flow, opportunity digest via TinyFish, template rendering, and live SMTP mocked transport
 
 ---
 
@@ -262,7 +299,7 @@ All 8 tests pass with 100% success rate.
 Hirely/
 ├── app/
 │   ├── core/
-│   │   ├── config.py             # Settings, pydantic-settings, CORS
+│   │   ├── config.py             # Settings, pydantic-settings, SMTP & TinyFish config
 │   │   └── database.py           # SQLite async SQLAlchemy engine & sessions
 │   ├── data/
 │   │   └── mock_opportunities.py # Curated fallback jobs, internships, hackathons
@@ -274,21 +311,27 @@ Hirely/
 │   │   ├── user_profile.py       # Profile & resume parser schemas
 │   │   ├── opportunity.py        # Search, filters, match result schemas
 │   │   ├── summary.py            # TinyFish summary schemas
-│   │   └── tracker.py            # Application tracker schemas
+│   │   ├── tracker.py            # Application tracker schemas
+│   │   ├── email.py              # SMTP email request & response schemas
+│   │   └── chat.py               # AI Chat schemas
 │   ├── services/
 │   │   ├── tinyfish_client.py    # TinyFish Search, Fetch, Agent API client
 │   │   ├── matching_service.py   # Multi-factor profile matching engine
-│   │   └── summarizer_service.py # Web scraping & AI extraction service
+│   │   ├── summarizer_service.py # Web scraping & AI extraction service
+│   │   └── email_service.py      # SMTP transport, HTML templates & TinyFish digests
 │   ├── routers/
-│   │   ├── profile.py            # Profile CRUD & resume parser
+│   │   ├── profile.py            # Profile CRUD & resume parser (auto-welcome email)
 │   │   ├── search.py             # Opportunity search
 │   │   ├── recommendations.py    # AI matched suggestions
 │   │   ├── summary.py            # Opportunity summarization
-│   │   └── tracker.py            # Saved/applied application tracker
+│   │   ├── tracker.py            # Saved/applied application tracker
+│   │   ├── chat.py               # AI co-pilot chat
+│   │   └── email.py              # SMTP email notification endpoints
 │   └── main.py                   # FastAPI app, CORS, lifespan seeding
 ├── tests/
-│   └── test_api.py               # Pytest suite for all endpoints
-├── .env.example                  # Sample environment variables
+│   ├── test_api.py               # Pytest suite for core API endpoints
+│   └── test_email.py             # Pytest suite for SMTP email service
+├── .env.example                  # Sample environment variables (TinyFish + SMTP)
 ├── .env                          # Local environment variables
 ├── .gitignore                    # Python gitignore
 ├── requirements.txt              # Production & test dependencies
