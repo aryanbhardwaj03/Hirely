@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.gemini_service import gemini_service
 
-router = APIRouter(prefix="/chat", tags=["Hirely Core AI (Gemini)"])
+router = APIRouter(prefix="/chat", tags=["Hirely Core AI"])
 
 
 @router.post("", response_model=ChatResponse)
@@ -22,7 +22,8 @@ async def chat_with_hirely_core(payload: ChatRequest):
         result = await gemini_service.generate_chat_reply(
             message=payload.message,
             history=payload.history,
-            user_id=payload.user_id
+            user_id=payload.user_id,
+            context=payload.context
         )
         return ChatResponse(
             reply=result["reply"],

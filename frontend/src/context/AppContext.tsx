@@ -111,7 +111,7 @@ const STORAGE_KEY_PROFILE = 'hirely_profile_v1';
 const STORAGE_KEY_SAVED = 'hirely_saved_ids_v1';
 const STORAGE_KEY_APPLICATIONS = 'hirely_applications_v1';
 const STORAGE_KEY_EMAIL = 'hirely_email_config_v1';
-const STORAGE_KEY_CHAT_SESSION = 'hirely_chat_session_v1';
+const STORAGE_KEY_CHAT_SESSION = 'hirely_chat_session_v2';
 
 const createBlankProfile = (user?: AuthUser | null): StudentProfile => ({
   name: user?.displayName || '',

@@ -4,7 +4,6 @@ import { GoogleGenAI } from '@google/genai';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import nodemailer from 'nodemailer';
 import { INITIAL_OPPORTUNITIES } from './src/data/opportunities.js';
 
 const app = express();
@@ -944,6 +943,7 @@ app.post('/api/email/test', async (req: Request, res: Response) => {
   }
 
   try {
+    const nodemailer = (await import('nodemailer')).default;
     const transporter = nodemailer.createTransport({
       host,
       port,
@@ -1001,6 +1001,7 @@ app.post('/api/email/welcome/:userId', async (req: Request, res: Response) => {
 
   try {
     const port = parseInt(process.env.SMTP_PORT || '587', 10);
+    const nodemailer = (await import('nodemailer')).default;
     const transporter = nodemailer.createTransport({
       host,
       port,
@@ -1059,6 +1060,7 @@ app.post('/api/email/send-recommendations', async (req: Request, res: Response) 
       ? incomingOpps
       : catalogOpportunities.slice(0, limit || 3);
 
+    const nodemailer = (await import('nodemailer')).default;
     const transporter = nodemailer.createTransport({
       host,
       port,
@@ -1139,7 +1141,7 @@ app.post('/api/email/digest-all', (_req: Request, res: Response) => {
 
 // 8. Hirely Core Chat Endpoint
 app.post('/api/chat', async (req: Request, res: Response) => {
-  const { message, history, user_id } = req.body;
+  const { message, history, context } = req.body;
 
   if (!message || typeof message !== 'string' || !message.trim()) {
     return res.status(400).json({ detail: 'A valid message string is required.' });
@@ -1148,9 +1150,10 @@ app.post('/api/chat', async (req: Request, res: Response) => {
   const systemPrompt =
     `You are Hirely Core, an elite AI career intelligence co-pilot for college students. ` +
     `You provide concise, highly actionable advice on internships, tech jobs, scholarships, hackathons, ` +
-    `resume improvements, technical roadmaps, and interview strategy. ` +
-    `Format responses with clear headings, bullet points, and bold text. ` +
-    `Be direct, practical, and highly encouraging.`;
+    `resume improvements, technical roadmaps, and interview strategy. Answer the latest message directly, ` +
+    `use conversation history to understand references, and personalize your answer using relevant supplied context. ` +
+    `Do not repeat a generic match analysis or invent opportunity details. Be concise, specific, and practical.\n` +
+    `Hirely context (JSON): ${JSON.stringify(context || {}).slice(0, 12000)}`;
 
   // Format multi-turn conversation history for Gemini
   const contents: any[] = [];
@@ -1172,7 +1175,7 @@ app.post('/api/chat', async (req: Request, res: Response) => {
   });
 
   if (aiClient) {
-    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+    const modelsToTry = ['gemini-3.8-flash', 'gemini-3.5-flash-lite'];
     for (const modelName of modelsToTry) {
       try {
         const response = await aiClient.models.generateContent({
@@ -1180,8 +1183,8 @@ app.post('/api/chat', async (req: Request, res: Response) => {
           contents,
           config: {
             systemInstruction: systemPrompt,
-            temperature: 0.4,
-            maxOutputTokens: 1000,
+            temperature: 0.75,
+            maxOutputTokens: 1400,
           }
         });
 
@@ -1198,17 +1201,43 @@ app.post('/api/chat', async (req: Request, res: Response) => {
     }
   }
 
-  // Graceful structured reasoning fallback if API quota or key is not active
-  return res.json({
-    reply:
-      `### 🎯 Opportunity Match & Career Guidance\n\n` +
-      `- **Role Fit**: Strong alignment with your technical profile, coursework, and declared focus.\n` +
-      `- **Key Skills**: Matches core full-stack, distributed systems, and AI competencies.\n` +
-      `- **Recommendations**: Highlight relevant GitHub repositories and showcase live project deployments in your application.\n` +
-      `- **Strategy**: Focus on measurable impact in previous hackathons or coursework (e.g. latency reduction, architecture design).\n\n` +
-      `*Action Item*: Review the verified application deadline and tailor your submission statement for the top match.`,
-    model_used: 'hirely-core-engine',
-    status: 'success'
+  if (groqApiKey) {
+    try {
+      const groqMessages = [
+        { role: 'system', content: systemPrompt },
+        ...(Array.isArray(history) ? history
+          .filter((item: any) => item && typeof item.content === 'string' && ['user', 'assistant'].includes(item.role))
+          .slice(-12)
+          .map((item: any) => ({ role: item.role, content: String(item.content).slice(0, 8000) })) : []),
+        { role: 'user', content: String(message) },
+      ];
+      const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: groqMessages,
+          temperature: 0.75,
+          max_completion_tokens: 1400,
+        }),
+        signal: AbortSignal.timeout(25000),
+      });
+      if (groqResponse.ok) {
+        const data: any = await groqResponse.json();
+        const reply = data.choices?.[0]?.message?.content;
+        if (typeof reply === 'string' && reply.trim()) {
+          return res.json({ reply, model_used: 'Groq llama-3.3-70b-versatile', status: 'success' });
+        }
+      } else {
+        console.warn('Groq Hirely Core returned HTTP', groqResponse.status);
+      }
+    } catch (err: any) {
+      console.warn('Groq Hirely Core request failed:', err?.message || err);
+    }
+  }
+
+  return res.status(503).json({
+    detail: 'Hirely Core could not get a response from Gemini or Groq. Check the configured API keys and server logs, then retry.',
   });
 });
 

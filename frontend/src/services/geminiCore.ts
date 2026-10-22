@@ -27,93 +27,11 @@ export interface HirelyCoreResponse {
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 /**
- * Intelligent client-side reasoning fallback when backend connection is unavailable or delayed.
- * Ensures the student never experiences a broken or timed-out chat experience.
- */
-function generateLocalHirelyReasoning(
-  message: string,
-  profile: StudentProfile,
-  opportunity?: Opportunity | null
-): string {
-  const q = message.toLowerCase();
-  const topSkills = profile.skills.slice(0, 4).join(', ') || 'Python, Distributed Systems, React';
-
-  if (opportunity) {
-    const oppSkills = opportunity.required_skills.join(', ');
-    const matched = opportunity.required_skills.filter(s =>
-      profile.skills.some(ps => ps.toLowerCase().includes(s.toLowerCase()) || s.toLowerCase().includes(ps.toLowerCase()))
-    );
-    const missing = opportunity.required_skills.filter(s => !matched.includes(s));
-
-    return (
-      `### 🎯 Opportunity Intelligence: **${opportunity.title}** at **${opportunity.organization}**\n\n` +
-      `- **Match Score**: **${opportunity.match_score}%** alignment with your **${profile.degree}** coursework.\n` +
-      `- **Key Stack Requested**: \`${oppSkills}\`\n` +
-      `- **Your Matched Strengths**: ${matched.length > 0 ? matched.map(m => `**${m}**`).join(', ') : 'Strong foundational computing background'}.\n` +
-      (missing.length > 0 ? `- **Growth Areas to Highlight**: ${missing.map(m => `*${m}*`).join(', ')}.\n\n` : '\n') +
-      `#### 🚀 Strategic Recommendation for Alex:\n` +
-      `1. **Application Positioning**: Tailor your resume header to emphasize your hands-on work with ${matched.slice(0, 2).join(' and ') || 'modern full-stack systems'}.\n` +
-      `2. **Portfolio Evidence**: Link directly to a deployed GitHub repository demonstrating clean API architecture.\n` +
-      `3. **Deadline Action**: This role lists a deadline of **${opportunity.deadlineFormatted}** (${opportunity.daysLeft ? `${opportunity.daysLeft} days remaining` : 'rolling'}). Submit within the top quartile for priority review.`
-    );
-  }
-
-  if (q.includes('roadmap') || q.includes('skill') || q.includes('missing') || q.includes('learn')) {
-    return (
-      `### 🗺️ High-Leverage Technical Roadmap for ${profile.name}\n\n` +
-      `Based on current 2026 hiring metrics for **${profile.fieldOfStudy}** students:\n\n` +
-      `1. **Week 1 - Production Microservices & Orchestration**:\n` +
-      `   - Build an asynchronous REST/gRPC pipeline using **FastAPI** or **Go**.\n` +
-      `   - Containerize services with multi-stage **Docker** builds and lightweight health endpoints.\n\n` +
-      `2. **Week 2 - AI Systems & Autonomous Agents**:\n` +
-      `   - Integrate LLM function-calling (Gemini 2.5 / OpenAI) with structured Pydantic schema validation.\n` +
-      `   - Implement browser automation or retrieval-augmented search (e.g. AI search / vector embeddings).\n\n` +
-      `3. **Week 3 - Deployment & Public Evidence**:\n` +
-      `   - Deploy live on Vercel/Fly.io and write a concise technical README with performance benchmarks.\n\n` +
-      `*Your current verified skills (${topSkills}) give you an exceptional starting foundation!*`
-    );
-  }
-
-  if (q.includes('delhi') || q.includes('ncr') || q.includes('location') || q.includes('local')) {
-    return (
-      `### 📍 Regional Opportunity Analysis: Delhi/NCR & Remote\n\n` +
-      `Great news—students from institutions like **${profile.university}** have high interview callback rates for:\n\n` +
-      `- **Noida Campus Tech Centers**: Microsoft India IDC, Adobe, and Oracle Cloud.\n` +
-      `- **Gurugram Engineering Hubs**: Google India, Zomato/Blinkit, and high-growth AI startups.\n` +
-      `- **Global Virtual Hackathons & Fellowships**: Virtual grant tracks with MIT Hackathon, UN Climate Tech, and AnitaB.org.\n\n` +
-      `💡 **Pro Tip**: Set your dashboard location filter to **"All Locations"** to also see 100% remote positions paying competitive stipends in USD and INR!`
-    );
-  }
-
-  if (q.includes('resume') || q.includes('cv') || q.includes('profile')) {
-    return (
-      `### 📄 Resume Optimization Strategy\n\n` +
-      `1. **Lead with Technical Impact**:\n` +
-      `   - Instead of *"Helped build a chatbot"*, use: *"Architected asynchronous AI event pipeline processing 1,200 requests/min with sub-250ms p95 latency."*\n` +
-      `2. **Prominently Feature Core Coursework**:\n` +
-      `   - Ensure **${profile.skills.slice(0, 3).join(', ')}** are placed in the top Technical Skills section.\n` +
-      `3. **Direct Verification Links**:\n` +
-      `   - Add live demo URLs and GitHub badges next to each project bullet.`
-    );
-  }
-
-  return (
-    `### ⚡ Hirely Core Career Intelligence\n\n` +
-    `Hello **${profile.name}**! I'm actively indexing your **${profile.degree}** profile in **${profile.fieldOfStudy}**.\n\n` +
-    `Here is how we can accelerate your search right now:\n` +
-    `- **Match Breakdown**: Select any opportunity card on your dashboard or discover tab to inspect deep skill alignments.\n` +
-    `- **Auto-Tracker**: Save promising roles into your Kanban board to manage upcoming application deadlines.\n` +
-    `- **Mock Interview Prep**: Ask me to run a mock interview for any engineering role.\n\n` +
-    `*What specific company or technical track would you like to target today?*`
-  );
-}
-
-/**
  * Sends chat prompt to FastAPI backend at POST /api/chat.
- * Resilient against network drops, proxy differences, or latency timeouts with graceful fallback.
+ * Tries configured chat backends and reports service failures instead of fabricating a canned answer.
  */
 export async function askHirelyCore(request: HirelyCoreRequest): Promise<HirelyCoreResponse> {
-  const { messages, userProfile, userId, selectedOpportunity } = request;
+  const { messages, userProfile, userId, selectedOpportunity, opportunities } = request;
   const lastMessage = messages[messages.length - 1]?.content || '';
 
   // Format conversation history for the backend
@@ -132,6 +50,34 @@ export async function askHirelyCore(request: HirelyCoreRequest): Promise<HirelyC
     message: augmentedMessage,
     history,
     user_id: userId || userProfile.email || 1,
+    context: {
+      candidate: {
+        name: userProfile.name,
+        degree: userProfile.degree,
+        field_of_study: userProfile.fieldOfStudy,
+        year: userProfile.year,
+        university: userProfile.university,
+        skills: userProfile.skills,
+        interests: userProfile.interests,
+        location: userProfile.location,
+      },
+      selected_opportunity: selectedOpportunity ? {
+        title: selectedOpportunity.title,
+        organization: selectedOpportunity.organization,
+        location: selectedOpportunity.location,
+        required_skills: selectedOpportunity.required_skills,
+        deadline: selectedOpportunity.deadlineFormatted,
+        url: selectedOpportunity.url,
+      } : null,
+      top_opportunities: (opportunities || []).slice(0, 5).map((item) => ({
+        title: item.title,
+        organization: item.organization,
+        required_skills: item.required_skills,
+        deadline: item.deadlineFormatted,
+        match_score: item.match_score,
+        url: item.url,
+      })),
+    },
   };
 
   const headers: Record<string, string> = {
@@ -158,6 +104,7 @@ export async function askHirelyCore(request: HirelyCoreRequest): Promise<HirelyC
 
   const uniqueUrls = Array.from(new Set(candidateUrls));
 
+  let lastError = '';
   for (const targetUrl of uniqueUrls) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s per candidate attempt
@@ -183,17 +130,19 @@ export async function askHirelyCore(request: HirelyCoreRequest): Promise<HirelyC
             isFallback: data.model_used === 'hirely-local-reasoning' || Boolean(data.is_fallback),
           };
         }
+      } else {
+        try {
+          const data = await res.json();
+          lastError = data.detail || data.error || `Hirely Core returned HTTP ${res.status}.`;
+        } catch {
+          lastError = `Hirely Core returned HTTP ${res.status}.`;
+        }
       }
-    } catch {
+    } catch (err) {
       clearTimeout(timeoutId);
-      // Try next endpoint or fallback gracefully
+      lastError = err instanceof Error ? err.message : 'Could not reach the Hirely Core service.';
     }
   }
 
-  // If live backend endpoints did not respond or timed out, provide elite local AI career co-pilot reasoning
-  return {
-    reply: generateLocalHirelyReasoning(augmentedMessage, userProfile, selectedOpportunity),
-    modelUsed: 'hirely-core-engine',
-    isFallback: true,
-  };
+  throw new Error(lastError || 'Could not connect to Hirely Core. Check that the backend is running and try again.');
 }

@@ -16,8 +16,8 @@ class GeminiService:
 
     def __init__(self):
         # Valid Google Gemini models supported by Google AI v1beta
-        self.primary_model = "gemini-2.5-flash"
-        self.fallback_models = ["gemini-2.0-flash", "gemini-1.5-flash"]
+        self.primary_model = "gemini-3.8-flash"
+        self.fallback_models = ["gemini-3.5-flash-lite"]
 
     def get_api_key(self) -> str:
         # Check settings first, then os.environ
@@ -28,7 +28,8 @@ class GeminiService:
         self,
         message: str,
         history: Optional[List[Union[Dict[str, Any], Any]]] = None,
-        user_id: Optional[Union[int, str]] = None
+        user_id: Optional[Union[int, str]] = None,
+        context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, str]:
         api_key = self.get_api_key()
 
@@ -37,8 +38,11 @@ class GeminiService:
             "You are Hirely Core, an elite AI career intelligence co-pilot for college students. "
             "You provide concise, highly actionable advice on internships, tech jobs, scholarships, hackathons, "
             "resume improvements, technical roadmaps, and interview strategy. "
-            "Keep responses structured, encouraging, and clear using bullet points and bold highlights. "
-            "Be direct, insightful, and focused on practical steps to help the student succeed."
+            "Answer the user's latest question directly and use the conversation history to resolve references. "
+            "Use the supplied candidate and opportunity context when relevant, and say when information is missing. "
+            "Do not reuse a generic opportunity-match template. Keep responses tailored, concise, and actionable. "
+            "Do not invent job details, metrics, or deadlines.\n"
+            f"Relevant Hirely context (JSON): {json.dumps(context or {}, ensure_ascii=False)[:12000]}"
         )
 
         if api_key:
@@ -47,10 +51,50 @@ class GeminiService:
             if reply:
                 return {"reply": reply, "model_used": model}
 
-        # Fallback response if API key is not configured or network failure
-        logger.info("Using structured Hirely Core AI co-pilot reasoning.")
-        fallback_reply = self._generate_local_fallback(message)
-        return {"reply": fallback_reply, "model_used": "hirely-local-reasoning"}
+        if settings.GROQ_API_KEY:
+            reply = await self._call_groq_api(settings.GROQ_API_KEY, message, history, system_instruction)
+            if reply:
+                return {"reply": reply, "model_used": "Groq llama-3.3-70b-versatile"}
+
+        raise RuntimeError("Gemini and Groq could not generate a reply. Check provider credentials and backend logs.")
+
+    async def _call_groq_api(
+        self,
+        api_key: str,
+        message: str,
+        history: Optional[List[Any]],
+        system_instruction: str,
+    ) -> Optional[str]:
+        import httpx
+
+        messages = [{"role": "system", "content": system_instruction}]
+        for item in (history or [])[-12:]:
+            if isinstance(item, dict):
+                role = item.get("role")
+                content = item.get("content", "")
+            else:
+                role = getattr(item, "role", None)
+                content = getattr(item, "content", "")
+            if role in {"user", "assistant", "model"} and content:
+                messages.append({"role": "assistant" if role == "model" else role, "content": str(content)[:8000]})
+        messages.append({"role": "user", "content": message})
+        try:
+            async with httpx.AsyncClient(timeout=25.0) as client:
+                response = await client.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                    json={
+                        "model": "llama-3.3-70b-versatile",
+                        "messages": messages,
+                        "temperature": 0.75,
+                        "max_completion_tokens": 1200,
+                    },
+                )
+            response.raise_for_status()
+            return response.json().get("choices", [{}])[0].get("message", {}).get("content")
+        except Exception as exc:
+            logger.warning("Groq Hirely Core chat failed: %s", exc)
+            return None
 
     async def _call_gemini_api(
         self,
@@ -62,10 +106,10 @@ class GeminiService:
         """Call Gemini API via httpx REST endpoint with primary and fallback models."""
         import httpx
 
-        # Convert history
+        # Keep requests bounded while retaining enough context for follow-up questions.
         contents = []
         if history:
-            for item in history:
+            for item in history[-12:]:
                 if isinstance(item, dict):
                     role = "user" if item.get("role") == "user" else "model"
                     contents.append({"role": role, "parts": [{"text": item.get("content", "")}]})
@@ -81,7 +125,7 @@ class GeminiService:
                 "parts": [{"text": system_instruction}]
             },
             "generationConfig": {
-                "temperature": 0.4,
+                "temperature": 0.7,
                 "maxOutputTokens": 1000
             }
         }
@@ -90,7 +134,7 @@ class GeminiService:
         models_to_try = [self.primary_model] + self.fallback_models
 
         try:
-            async with httpx.AsyncClient(timeout=8.0) as client:
+            async with httpx.AsyncClient(timeout=15.0) as client:
                 for model in models_to_try:
                     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
                     try:
@@ -111,42 +155,5 @@ class GeminiService:
             logger.warning(f"Gemini client session error: {e}")
 
         return None, self.primary_model
-
-    def _generate_local_fallback(self, message: str) -> str:
-        msg_lower = message.lower()
-        if "match" in msg_lower or "why" in msg_lower:
-            return (
-                "### 🎯 Match Analysis & Alignment\n\n"
-                "- **Core Alignment**: Strong synergy with your technical stack and declared domain interests.\n"
-                "- **Verified Criteria**: Matches key role requirements in modern full-stack / AI development.\n"
-                "- **Competitive Edge**: Your hands-on project portfolio directly demonstrates the competencies sought by the host organization.\n\n"
-                "**Action Step**: Tailor your resume summary to explicitly highlight relevant framework experience before submitting."
-            )
-        elif "resume" in msg_lower or "cv" in msg_lower:
-            return (
-                "### 📄 Resume Optimization Strategy\n\n"
-                "1. **Impact-Driven Bullets**: Use the Google XYZ formula: *Accomplished [X] as measured by [Y], by doing [Z]*.\n"
-                "2. **Keyword Density**: Ensure primary technologies (e.g. Python, React, TypeScript, APIs) appear naturally in project descriptions.\n"
-                "3. **Links**: Link directly to working GitHub demos and live deployments.\n\n"
-                "Review the opportunity's required skills list and mirror the primary terminology in your work history."
-            )
-        elif "interview" in msg_lower or "prep" in msg_lower:
-            return (
-                "### 💡 Interview Preparation Playbook\n\n"
-                "- **Technical Depth**: Review system architecture fundamentals and asynchronous state handling.\n"
-                "- **Domain Context**: Research recent engineering blog posts or product releases from the host organization.\n"
-                "- **Behavioral**: Prepare 2-3 stories following the STAR method (Situation, Task, Action, Result) showcasing ownership."
-            )
-        else:
-            return (
-                "### 🚀 Hirely Core Opportunity Intelligence\n\n"
-                f"Regarding: *\"{message[:60]}...\"*\n\n"
-                "Here are key insights for your opportunity workflow:\n"
-                "- Review the eligibility requirements and submission deadline.\n"
-                "- Align your profile skills with the top 3 requested requirements.\n"
-                "- Use the Application Tracker to log submission status and set reminders.\n\n"
-                "Feel free to ask for matching score breakdowns, resume bullet reviews, or interview preparation tips!"
-            )
-
 
 gemini_service = GeminiService()
