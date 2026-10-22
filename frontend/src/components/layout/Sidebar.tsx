@@ -14,6 +14,7 @@ import {
   Mail,
   Bot,
   LogOut,
+  CalendarCheck,
   X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -43,6 +44,7 @@ export const Sidebar: React.FC = () => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'discover', label: 'Opportunity Match', icon: Sparkles },
     { id: 'assistant', label: 'Hirely Core AI', icon: Bot, isAi: true },
+    { id: 'planner', label: 'Action Planner', icon: CalendarCheck },
     { id: 'tracker', label: 'Application Tracker', icon: Kanban },
     { id: 'profile', label: 'Talent Profile', icon: UserCheck },
     { id: 'settings', label: 'Settings & Email', icon: Settings },

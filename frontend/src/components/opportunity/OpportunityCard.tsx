@@ -13,6 +13,7 @@ import {
   Radio
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { TrustCheckBadge } from '../trustcheck/TrustCheckBadge';
 
 interface OpportunityCardProps {
   opportunity: Opportunity;
@@ -63,6 +64,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   const displayOrg = opportunity.organization || 'Company unverified';
   const displayLocation = opportunity.location || 'Location unverified';
   const displayDeadline = opportunity.deadlineFormatted || 'Deadline not specified';
+  const isRolePosting = opportunity.category === 'job' || opportunity.category === 'internship';
 
   return (
     <motion.div
@@ -86,6 +88,12 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono tracking-wider border font-medium ${getWorkArrangementBadgeClass(opportunity.workArrangement)}`}>
               {opportunity.workArrangement || (opportunity.isRemote ? 'Remote' : 'On-site')}
             </span>
+
+            {/* TrustCheck Status Badge */}
+            <TrustCheckBadge
+              status={opportunity.trust_status || (opportunity.isSourceVerified ? 'verified' : 'unverified')}
+              score={opportunity.trust_score}
+            />
           </div>
 
           <div className="flex items-center gap-1.5">
@@ -192,7 +200,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
             onClick={(e) => e.stopPropagation()}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl bg-[#F8F8F8] text-[#0F0F0F] hover:bg-[#5DD62C] hover:shadow-[0_0_18px_rgba(93,214,44,0.4)] text-xs font-bold tracking-tight transition-all duration-300 cursor-pointer whitespace-nowrap"
           >
-            <span>Apply Now</span>
+            <span>{isRolePosting ? 'View job description' : 'View official listing'}</span>
             <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
           </a>
         </div>

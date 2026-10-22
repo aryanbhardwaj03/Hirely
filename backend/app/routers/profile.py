@@ -1,6 +1,7 @@
 import re
+from io import BytesIO
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -103,7 +104,10 @@ async def parse_resume_or_bio(data: ResumeParseRequest):
     Auto-extracts skills, suggested target roles, experience level,
     and interests from raw resume text or candidate bio.
     """
-    text = data.text
+    return _parse_resume_text(data.text)
+
+
+def _parse_resume_text(text: str):
     text_lower = text.lower()
 
     # Skill dictionary
@@ -156,7 +160,32 @@ async def parse_resume_or_bio(data: ResumeParseRequest):
         extracted_name=None,
         suggested_target_role=role,
         suggested_experience_level=experience,
-        extracted_skills=found_skills if found_skills else ["Python", "FastAPI", "React", "Docker"],
+        extracted_skills=found_skills,
         suggested_interests=interests,
         extracted_summary=f"Profile identified as {experience} specializing in {role} with technical background in {', '.join(found_skills[:4]) if found_skills else 'software development'}."
     )
+
+
+@router.post("/upload-resume", response_model=ResumeParseResponse)
+async def upload_resume(file: UploadFile = File(...)):
+    """Extract text from a PDF or DOCX resume and return the same profile suggestions."""
+    filename = (file.filename or "").lower()
+    content = await file.read(8 * 1024 * 1024 + 1)
+    if len(content) > 8 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Resume must be smaller than 8 MB.")
+    try:
+        if filename.endswith(".pdf"):
+            from pypdf import PdfReader
+            text = "\n".join(page.extract_text() or "" for page in PdfReader(BytesIO(content)).pages)
+        elif filename.endswith(".docx"):
+            from docx import Document
+            text = "\n".join(paragraph.text for paragraph in Document(BytesIO(content)).paragraphs)
+        else:
+            raise HTTPException(status_code=415, detail="Upload a PDF or DOCX resume.")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Could not read this resume. Try another PDF or DOCX file.") from exc
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="No selectable text found. Please use a text-based PDF or DOCX.")
+    return _parse_resume_text(text)

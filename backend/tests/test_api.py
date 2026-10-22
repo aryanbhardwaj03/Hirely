@@ -214,3 +214,38 @@ async def test_tracker_flow():
         # 5. Delete tracker item
         del_res = await client.delete(f"/api/tracker/{tracker_id}")
         assert del_res.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_discover_and_health_and_chat():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # Test /api/health
+        health_res = await client.get("/api/health")
+        assert health_res.status_code == 200
+        assert health_res.json()["status"] == "healthy"
+
+        # Test POST /api/discover
+        discover_res = await client.post("/api/discover", json={
+            "degree": "B.Tech Computer Science",
+            "year": 3,
+            "skills": ["Python", "FastAPI", "React"],
+            "location": "Delhi/NCR, India",
+            "categories": ["jobs", "internships"]
+        })
+        assert discover_res.status_code == 200
+        data = discover_res.json()
+        assert data["source"] == "live_backend"
+        assert len(data["opportunities"]) > 0
+        assert len(data["activity"]) > 0
+
+        # Test POST /api/chat
+        chat_res = await client.post("/api/chat", json={
+            "message": "What skills should I learn for an AI Backend Engineer role?",
+            "history": [],
+            "user_id": 1
+        })
+        assert chat_res.status_code == 200
+        chat_data = chat_res.json()
+        assert "reply" in chat_data
+        assert len(chat_data["reply"]) > 20

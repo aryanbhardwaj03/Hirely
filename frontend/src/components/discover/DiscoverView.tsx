@@ -14,7 +14,7 @@ import {
   Building
 } from 'lucide-react';
 import { searchBackendOpportunities } from '../../services/api';
-import { matchesLocationScope, sortOpportunities, isTrustworthySource } from '../../utils/opportunityFilters';
+import { matchesLocationScope, sortOpportunities, isTrustworthySource, isDirectPostingUrl } from '../../utils/opportunityFilters';
 
 export const DiscoverView: React.FC = () => {
   const {
@@ -85,18 +85,21 @@ export const DiscoverView: React.FC = () => {
     const filtered = sourceList.filter(opp => {
       // Trustworthy source filter
       if (!isTrustworthySource(opp.url, opp.source)) return false;
+      if ((opp.category === 'job' || opp.category === 'internship') && !isDirectPostingUrl(opp.url)) return false;
 
       // Location scope filter
       if (!matchesLocationScope(opp, locationScope)) return false;
 
       // Search text
       if (search.trim() && !backendResults) {
-        const q = search.toLowerCase();
+        const q = search.toLowerCase().trim();
         const matchesTitle = opp.title.toLowerCase().includes(q);
         const matchesOrg = opp.organization.toLowerCase().includes(q);
+        const matchesCategory = opp.category.toLowerCase().includes(q);
         const matchesSkill = opp.required_skills.some(s => s.toLowerCase().includes(q));
         const matchesLocation = opp.location.toLowerCase().includes(q);
-        if (!matchesTitle && !matchesOrg && !matchesSkill && !matchesLocation) return false;
+        const matchesDesc = (opp.description || '').toLowerCase().includes(q);
+        if (!matchesTitle && !matchesOrg && !matchesCategory && !matchesSkill && !matchesLocation && !matchesDesc) return false;
       }
 
       // Categories
@@ -119,7 +122,7 @@ export const DiscoverView: React.FC = () => {
     setSearch('');
     setSelectedCategories([]);
     setRemoteOnly(false);
-    setLocationScope('delhi_ncr');
+    setLocationScope('all');
     setSortBy('newest');
     setBackendResults(null);
   };
@@ -137,6 +140,18 @@ export const DiscoverView: React.FC = () => {
           </p>
         </div>
 
+        <button
+          onClick={() => {
+            const profileTerms = [...profile.skills.slice(0, 6), profile.fieldOfStudy].filter(Boolean);
+            setSearch(profileTerms.join(' '));
+            setSelectedCategories(['job']);
+          }}
+          disabled={!profile.skills.length && !profile.fieldOfStudy}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] text-slate-200 text-xs font-semibold transition-all cursor-pointer disabled:opacity-40"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-[#5DD62C]" />
+          <span>Match my skills</span>
+        </button>
         <button
           onClick={() => runDiscovery(selectedCategories)}
           disabled={isDiscovering}
@@ -267,7 +282,7 @@ export const DiscoverView: React.FC = () => {
           <Sparkles className="w-8 h-8 text-slate-500 mx-auto" />
           <h3 className="text-base font-semibold text-white">No opportunities match current criteria</h3>
           <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            Try broadening your location filter, clearing category selections, or adjusting your search keywords.
+            Try broadening your filters or keywords. Job results link directly to individual posting pages.
           </p>
           <button
             onClick={() => {

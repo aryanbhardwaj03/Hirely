@@ -15,6 +15,7 @@ from app.schemas.user_profile import UserProfileBase
 from app.services.tinyfish_client import tinyfish_client
 from app.services.matching_service import matching_service
 from app.data.mock_opportunities import MOCK_OPPORTUNITIES
+from app.services.job_links import is_direct_posting_url
 
 router = APIRouter(prefix="/recommendations", tags=["AI Recommendations"])
 
@@ -34,10 +35,18 @@ async def get_personalized_recommendations(
     res = await db.execute(select(UserProfile).where(UserProfile.id == user_id))
     user = res.scalar_one_or_none()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User profile with ID {user_id} not found."
-        )
+        # Check if any profile exists in database
+        res_any = await db.execute(select(UserProfile).limit(1))
+        user = res_any.scalar_one_or_none()
+        if not user:
+            user = UserProfileBase(
+                name="Student Developer",
+                email="student@university.edu",
+                target_role="Software / AI Engineer",
+                skills=["Python", "React", "TypeScript", "Algorithms", "Machine Learning"],
+                preferred_locations=["Remote", "Delhi/NCR, India"],
+                opportunity_types=["job", "internship", "hackathon"]
+            )
 
     return await _generate_recommendations_for_user(user, limit_per_category, db)
 
@@ -104,6 +113,13 @@ async def _generate_recommendations_for_user(
                 "source": opp.source
             })
 
+    # General careers directories are not usable application links; keep only posting pages.
+    all_opps = [
+        opp for opp in all_opps
+        if str(opp.get("type", "")).lower() not in {"job", "jobs", "intern", "internship", "internships"}
+        or is_direct_posting_url(opp.get("url", ""))
+    ]
+
     # Rank all opportunities using matching engine
     ranked = matching_service.rank_opportunities(user, all_opps, limit=100)
 
@@ -113,7 +129,7 @@ async def _generate_recommendations_for_user(
     hackathons_ranked = []
 
     for item in ranked:
-        opp_type = item["opportunity"].get("type", "job")
+        raw_type = str(item["opportunity"].get("type", "job")).lower().strip()
         match_result = OpportunityMatchResult(
             opportunity=OpportunityResponse(**item["opportunity"]),
             match_score=item["match_score"],
@@ -122,12 +138,14 @@ async def _generate_recommendations_for_user(
             matched_skills=item["matched_skills"],
             missing_skills=item["missing_skills"]
         )
-        if opp_type == "job":
+        if raw_type in ["job", "jobs", "fulltime", "contract"]:
             jobs_ranked.append(match_result)
-        elif opp_type == "internship":
+        elif raw_type in ["internship", "internships", "intern", "fellowship", "fellowships"]:
             internships_ranked.append(match_result)
-        elif opp_type == "hackathon":
+        elif raw_type in ["hackathon", "hackathons", "competition", "competitions", "scholarship", "scholarships"]:
             hackathons_ranked.append(match_result)
+        else:
+            jobs_ranked.append(match_result)
 
     user_id = getattr(user, "id", None)
     user_name = getattr(user, "name", "User")

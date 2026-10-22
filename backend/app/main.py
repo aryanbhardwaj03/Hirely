@@ -14,7 +14,10 @@ from app.routers import (
     summary_router,
     tracker_router,
     chat_router,
-    email_router
+    email_router,
+    discover_router,
+    trustcheck_router,
+    planner_router
 )
 
 
@@ -77,6 +80,9 @@ app.include_router(summary_router, prefix=settings.API_V1_STR)
 app.include_router(tracker_router, prefix=settings.API_V1_STR)
 app.include_router(chat_router, prefix=settings.API_V1_STR)
 app.include_router(email_router, prefix=settings.API_V1_STR)
+app.include_router(discover_router, prefix=settings.API_V1_STR)
+app.include_router(trustcheck_router, prefix=settings.API_V1_STR)
+app.include_router(planner_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/", tags=["Health"])
@@ -91,15 +97,20 @@ async def root():
         "endpoints": {
             "profiles": f"{settings.API_V1_STR}/profile",
             "search": f"{settings.API_V1_STR}/search",
+            "discover": f"{settings.API_V1_STR}/discover",
             "recommendations": f"{settings.API_V1_STR}/recommendations",
             "summary": f"{settings.API_V1_STR}/summary",
             "tracker": f"{settings.API_V1_STR}/tracker",
-            "email": f"{settings.API_V1_STR}/email"
+            "chat": f"{settings.API_V1_STR}/chat",
+            "email": f"{settings.API_V1_STR}/email",
+            "trustcheck": f"{settings.API_V1_STR}/trustcheck",
+            "planner": f"{settings.API_V1_STR}/planner"
         }
     }
 
 
 @app.get("/health", tags=["Health"])
+@app.get("/api/health", tags=["Health"])
 async def health_check():
     return {
         "status": "healthy",

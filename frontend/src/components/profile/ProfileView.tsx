@@ -17,7 +17,7 @@ import {
   UploadCloud,
   Loader2
 } from 'lucide-react';
-import { parseResumeText } from '../../services/api';
+import { parseResumeFile, parseResumeText } from '../../services/api';
 
 export const ProfileView: React.FC = () => {
   const { profile, updateProfile, showToast } = useApp();
@@ -29,6 +29,7 @@ export const ProfileView: React.FC = () => {
 
   // Resume parse state
   const [resumeText, setResumeText] = useState('');
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [showResumeModal, setShowResumeModal] = useState(false);
 
@@ -87,9 +88,9 @@ export const ProfileView: React.FC = () => {
   };
 
   const handleParseResume = async () => {
-    if (!resumeText.trim()) return;
+    if (!resumeText.trim() && !resumeFile) return;
     setIsParsing(true);
-    const parsed = await parseResumeText(resumeText);
+    const parsed = resumeFile ? await parseResumeFile(resumeFile) : await parseResumeText(resumeText);
     setIsParsing(false);
 
     if (parsed) {
@@ -105,6 +106,7 @@ export const ProfileView: React.FC = () => {
       showToast(`Resume parsed! Extracted ${parsed.extracted_skills.length} skills.`, 'success');
       setShowResumeModal(false);
       setResumeText('');
+      setResumeFile(null);
     } else {
       showToast('Could not parse resume text; check backend connection.', 'warning');
     }
@@ -369,8 +371,14 @@ export const ProfileView: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-300">
-              Paste your resume text or LinkedIn summary below. Hirely's resume parser will extract your top skills, target role, and suggested interests.
+              Upload a PDF or DOCX, or paste your resume text. Hirely will extract skills and suggest relevant roles.
             </p>
+
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-white/15 bg-white/[0.03] p-4 text-xs text-slate-300 hover:border-[#00E676]/50">
+              <UploadCloud className="h-4 w-4 text-[#00E676]" />
+              <span className="min-w-0 flex-1 truncate">{resumeFile?.name || 'Choose a PDF or DOCX resume (max 8 MB)'}</span>
+              <input type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="sr-only" onChange={(e) => setResumeFile(e.target.files?.[0] || null)} />
+            </label>
 
             <textarea
               rows={6}
@@ -389,7 +397,7 @@ export const ProfileView: React.FC = () => {
               </button>
               <button
                 onClick={handleParseResume}
-                disabled={isParsing || !resumeText.trim()}
+                disabled={isParsing || (!resumeText.trim() && !resumeFile)}
                 className="flex items-center gap-2 px-5 py-2 rounded-xl bg-white text-black font-semibold text-xs hover:bg-slate-200 disabled:opacity-50 cursor-pointer"
               >
                 {isParsing ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}

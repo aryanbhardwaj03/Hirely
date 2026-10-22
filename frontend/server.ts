@@ -61,7 +61,7 @@ app.post('/api/chat', async (req: Request, res: Response) => {
   });
 
   if (aiClient) {
-    const modelsToTry = ['gemini-3.8-flash', 'gemini-3.5-flash-lite'];
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
     for (const modelName of modelsToTry) {
       try {
         const response = await aiClient.models.generateContent({

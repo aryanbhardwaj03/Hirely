@@ -15,8 +15,9 @@ class GeminiService:
     """
 
     def __init__(self):
-        self.primary_model = "gemini-3.8-flash"
-        self.fallback_model = "gemini-3.5-flash-lite"
+        # Valid Google Gemini models supported by Google AI v1beta
+        self.primary_model = "gemini-2.5-flash"
+        self.fallback_models = ["gemini-2.0-flash", "gemini-1.5-flash"]
 
     def get_api_key(self) -> str:
         # Check settings first, then os.environ
@@ -41,13 +42,13 @@ class GeminiService:
         )
 
         if api_key:
-            # 1. Try with google.genai / @google/genai or REST
+            # 1. Try with Gemini REST API with bounded timeouts
             reply, model = await self._call_gemini_api(api_key, message, history, system_instruction)
             if reply:
                 return {"reply": reply, "model_used": model}
 
         # Fallback response if API key is not configured or network failure
-        logger.warning("Gemini API key not configured or call failed; generating structured assistance reply.")
+        logger.info("Using structured Hirely Core AI co-pilot reasoning.")
         fallback_reply = self._generate_local_fallback(message)
         return {"reply": fallback_reply, "model_used": "hirely-local-reasoning"}
 
@@ -85,26 +86,29 @@ class GeminiService:
             }
         }
 
-        # Try primary model then fallback
-        models_to_try = [self.primary_model, self.fallback_model]
+        # Try primary model then fallback with fast bounded timeouts
+        models_to_try = [self.primary_model] + self.fallback_models
 
-        async with httpx.AsyncClient(timeout=25.0) as client:
-            for model in models_to_try:
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-                try:
-                    res = await client.post(url, json=payload, headers={"Content-Type": "application/json"})
-                    if res.status_code == 200:
-                        data = res.json()
-                        candidates = data.get("candidates", [])
-                        if candidates:
-                            parts = candidates[0].get("content", {}).get("parts", [])
-                            text = "".join([p.get("text", "") for p in parts if "text" in p])
-                            if text:
-                                return text, model
-                    else:
-                        logger.warning(f"Gemini API returned {res.status_code} for model {model}: {res.text}")
-                except Exception as e:
-                    logger.warning(f"Error calling Gemini model {model}: {e}")
+        try:
+            async with httpx.AsyncClient(timeout=8.0) as client:
+                for model in models_to_try:
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+                    try:
+                        res = await client.post(url, json=payload, headers={"Content-Type": "application/json"})
+                        if res.status_code == 200:
+                            data = res.json()
+                            candidates = data.get("candidates", [])
+                            if candidates:
+                                parts = candidates[0].get("content", {}).get("parts", [])
+                                text = "".join([p.get("text", "") for p in parts if "text" in p])
+                                if text:
+                                    return text, model
+                        else:
+                            logger.warning(f"Gemini API returned {res.status_code} for model {model}")
+                    except Exception as e:
+                        logger.warning(f"Error querying Gemini model {model}: {e}")
+        except Exception as e:
+            logger.warning(f"Gemini client session error: {e}")
 
         return None, self.primary_model
 

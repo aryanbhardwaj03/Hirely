@@ -2,11 +2,17 @@ import { Opportunity, OpportunitySortOption, LocationScope } from '../types/oppo
 
 // Check if opportunity matches location scope
 export function matchesLocationScope(opp: Opportunity, scope: LocationScope): boolean {
-  if (scope === 'all') return true;
+  if (!scope || scope === 'all') return true;
 
   const loc = (opp.location || '').toLowerCase();
   const city = (opp.city || '').toLowerCase();
   const country = (opp.country || '').toLowerCase();
+  const isRemote = Boolean(
+    opp.isRemote ||
+    opp.workArrangement === 'Remote' ||
+    loc.includes('remote') ||
+    loc.includes('virtual')
+  );
 
   if (scope === 'delhi_ncr') {
     const isDelhiNCR =
@@ -19,9 +25,8 @@ export function matchesLocationScope(opp: Opportunity, scope: LocationScope): bo
       city.includes('noida') ||
       city.includes('gurugram');
 
-    // Also include verified India-wide remote roles
-    const isIndiaRemote = opp.isRemote && (loc.includes('india') || country.includes('india') || loc.includes('global remote') || loc.includes('virtual'));
-    return isDelhiNCR || isIndiaRemote;
+    // All remote opportunities are accessible to students in Delhi/NCR
+    return isDelhiNCR || isRemote;
   }
 
   if (scope === 'india') {
@@ -33,16 +38,20 @@ export function matchesLocationScope(opp: Opportunity, scope: LocationScope): bo
       loc.includes('mumbai') ||
       loc.includes('noida') ||
       loc.includes('gurugram') ||
+      loc.includes('gurgaon') ||
       loc.includes('pune') ||
       loc.includes('hyderabad') ||
+      loc.includes('chennai') ||
+      loc.includes('kolkata') ||
+      city.includes('delhi') ||
+      city.includes('bengaluru') ||
       country.includes('india');
 
-    const isGlobalRemote = opp.isRemote && (loc.includes('remote') || loc.includes('virtual'));
-    return isIndia || isGlobalRemote;
+    return isIndia || isRemote;
   }
 
   if (scope === 'remote_worldwide') {
-    return Boolean(opp.isRemote || opp.workArrangement === 'Remote' || loc.includes('remote') || loc.includes('virtual'));
+    return isRemote;
   }
 
   return true;
@@ -123,10 +132,9 @@ export function sortOpportunities(
 }
 
 // Filter out illegitimate sources (e.g. reddit, discord, youtube links masquerading as job posts)
-export function isTrustworthySource(url: string, source: string): boolean {
-  if (!url) return false;
-  const lowerUrl = url.toLowerCase();
-  const lowerSource = source.toLowerCase();
+export function isTrustworthySource(url?: string, source?: string): boolean {
+  const lowerUrl = (url || '').toLowerCase();
+  const lowerSource = (source || '').toLowerCase();
 
   const forbiddenDomains = [
     'reddit.com',
@@ -142,10 +150,29 @@ export function isTrustworthySource(url: string, source: string): boolean {
   ];
 
   for (const domain of forbiddenDomains) {
-    if (lowerUrl.includes(domain) || lowerSource.includes(domain)) {
+    if ((lowerUrl && lowerUrl.includes(domain)) || (lowerSource && lowerSource.includes(domain))) {
       return false;
     }
   }
 
   return true;
+}
+
+/** Whether a URL points to one job description instead of a company careers directory. */
+export function isDirectPostingUrl(url?: string): boolean {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+    if ([...parsed.searchParams.keys()].some(key => /^(gh_jid|job_id|jobid|jid|reqid|jobpostingid|jk|vjk)$/i.test(key))) return true;
+    const path = parsed.pathname.toLowerCase().replace(/\/$/, '');
+    if (/\/jobs?\/(view|details)\/[^/]+/.test(path)) return true;
+    const parts = path.split('/').filter(Boolean);
+    const marker = parts.findIndex(part => /^(job|jobs|career|careers|opening|openings|position|positions|role|roles)$/.test(part));
+    const generic = new Set(['career', 'careers', 'job', 'jobs', 'search', 'results', 'students', 'intern', 'interns', 'internship', 'internships', 'early-careers', 'campus', 'university', 'engineering', 'teams', 'departments', 'locations', 'openings', 'positions', 'roles', 'opportunities', 'all', 'view-all']);
+    if (marker >= 0 && parts[marker + 1] && !generic.has(parts[marker + 1])) return true;
+    return /(^|\.)jobs\.(lever\.co|ashbyhq\.com)$/.test(parsed.hostname) && parts.length >= 2;
+  } catch {
+    return false;
+  }
 }

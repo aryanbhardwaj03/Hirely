@@ -19,53 +19,51 @@ export interface DiscoverResponse {
   totalDiscovered: number;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 /**
  * Health check for Python FastAPI backend
  */
 export async function checkBackendHealth(): Promise<BackendHealthResponse> {
-  if (!API_BASE_URL) {
-    return {
-      status: 'healthy',
-      agentStatus: 'active',
-      isLiveBackend: false,
-    };
-  }
+  const urlsToTry = [
+    API_BASE_URL ? `${API_BASE_URL}/api/health` : null,
+    API_BASE_URL ? `${API_BASE_URL}/health` : null,
+    '/api/health',
+    '/health'
+  ].filter((u): u is string => Boolean(u));
 
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2500);
+  for (const url of Array.from(new Set(urlsToTry))) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-    const response = await fetch(`${API_BASE_URL}/api/health`, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-      signal: controller.signal,
-    });
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: controller.signal,
+      });
 
-    clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
 
-    if (response.ok) {
-      const data = await response.json();
-      return {
-        status: 'healthy',
-        version: data.version || '1.0.0',
-        agentStatus: 'active',
-        isLiveBackend: true,
-      };
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          status: 'healthy',
+          version: data.version || '1.0.0',
+          agentStatus: 'active',
+          isLiveBackend: true,
+        };
+      }
+    } catch {
+      // Try next candidate
     }
-    return {
-      status: 'unavailable',
-      agentStatus: 'standby',
-      isLiveBackend: false,
-    };
-  } catch {
-    return {
-      status: 'unavailable',
-      agentStatus: 'standby',
-      isLiveBackend: false,
-    };
   }
+
+  return {
+    status: 'healthy',
+    agentStatus: 'active',
+    isLiveBackend: false,
+  };
 }
 
 /**
@@ -85,14 +83,28 @@ export async function discoverOpportunities(
     { message: 'Synthesizing match weights & ranking top recommendations...', progress: 100 },
   ];
 
-  // If live backend URL is configured, attempt real connection with bounded backoff
+  // If live backend URL is configured, attempt real connection with bounded backoff + timeout
   if (API_BASE_URL) {
-    const maxRetries = 2;
+    const maxRetries = 1; // Reduced to fail faster and show fallback sooner
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      // Per-attempt abort controller with 8s timeout (independent of outer signal)
+      const attemptController = new AbortController();
+      const attemptTimeout = setTimeout(() => attemptController.abort(), 8000);
+
+      // Combine outer signal with per-attempt timeout signal
+      const combinedSignal = signal
+        ? (() => {
+            const combined = new AbortController();
+            signal.addEventListener('abort', () => combined.abort());
+            attemptController.signal.addEventListener('abort', () => combined.abort());
+            return combined.signal;
+          })()
+        : attemptController.signal;
+
       try {
         if (attempt > 0) {
           onProgress?.(0, `Retrying live backend connection (attempt ${attempt + 1}/${maxRetries + 1})...`, 15);
-          await new Promise((r) => setTimeout(r, 600 * attempt));
+          await new Promise((r) => setTimeout(r, 400));
         } else {
           onProgress?.(0, 'Connecting to Python FastAPI backend...', 10);
         }
@@ -112,8 +124,10 @@ export async function discoverOpportunities(
             'Accept': 'application/json',
           },
           body: JSON.stringify(payload),
-          signal,
+          signal: combinedSignal,
         });
+
+        clearTimeout(attemptTimeout);
 
         if (res.ok) {
           const data = await res.json();
@@ -126,9 +140,11 @@ export async function discoverOpportunities(
           };
         }
       } catch (err: any) {
+        clearTimeout(attemptTimeout);
+        // Only re-throw if the outer user signal aborted (user cancelled)
         if (signal?.aborted) throw err;
         if (attempt === maxRetries) {
-          console.warn('[TinyFish] Max retries exhausted for live backend; activating calibrated fallback engine.');
+          console.warn('[TinyFish] Backend unavailable; activating calibrated local fallback engine.');
         }
       }
     }

@@ -34,6 +34,21 @@ from app.schemas.email import (
     SendOpportunityEmailRequest,
     EmailBatchResponse
 )
+from app.schemas.trustcheck import (
+    TrustAssessmentResponse,
+    TrustRecheckRequest,
+    ScamReportCreate,
+    ScamReportResponse
+)
+from app.schemas.planner import (
+    CommitmentItem,
+    GeneratePlanRequest,
+    ActionPlanTaskResponse,
+    RankedOpportunityItem,
+    ExcludedOpportunityItem,
+    ActionPlanResponse,
+    TaskStatusUpdateRequest
+)
 
 __all__ = [
     "UserProfileCreate",
@@ -59,5 +74,16 @@ __all__ = [
     "TestEmailRequest",
     "SendWelcomeEmailRequest",
     "SendOpportunityEmailRequest",
-    "EmailBatchResponse"
+    "EmailBatchResponse",
+    "TrustAssessmentResponse",
+    "TrustRecheckRequest",
+    "ScamReportCreate",
+    "ScamReportResponse",
+    "CommitmentItem",
+    "GeneratePlanRequest",
+    "ActionPlanTaskResponse",
+    "RankedOpportunityItem",
+    "ExcludedOpportunityItem",
+    "ActionPlanResponse",
+    "TaskStatusUpdateRequest"
 ]

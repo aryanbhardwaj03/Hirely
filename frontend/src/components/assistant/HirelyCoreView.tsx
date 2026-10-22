@@ -33,7 +33,7 @@ export const HirelyCoreView: React.FC<HirelyCoreViewProps> = ({ embedded = false
       role: 'assistant',
       content: `## Welcome to Hirely Core Intelligence\n\nI'm your dedicated AI opportunity advisor. I have indexed your profile (**${profile.name}**, **${profile.degree}** in **${profile.fieldOfStudy}**) and **${opportunities.length} live verified opportunities**.\n\n* **Ask me to analyze your match** for any company (Google DeepMind, Microsoft, Zomato, MIT Hackathon).\n* **Discover missing skills** and get a personalized learning roadmap.\n* **Paste any job description or resume** to extract requirements and eligibility.\n\nHow can I help you accelerate your career search today?`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      modelUsed: 'gemini-3.8-flash',
+      modelUsed: 'gemini-2.5-flash',
     }
   ]);
 
@@ -117,7 +117,7 @@ export const HirelyCoreView: React.FC<HirelyCoreViewProps> = ({ embedded = false
         role: 'assistant',
         content: `## Conversation Reset\n\nReady for fresh queries. I'm actively referencing your **${profile.degree}** profile and current **${opportunities.length} opportunities**. What would you like to explore?`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        modelUsed: 'gemini-3.8-flash',
+        modelUsed: 'gemini-2.5-flash',
       }
     ]);
   };

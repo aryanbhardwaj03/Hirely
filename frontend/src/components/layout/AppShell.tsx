@@ -15,9 +15,10 @@ import { HirelyCoreView } from '../assistant/HirelyCoreView';
 import { HirelyCoreDrawer } from '../assistant/HirelyCoreDrawer';
 import { NotFoundView } from '../common/NotFoundView';
 import { SignInView } from '../auth/SignInView';
-import { OnboardingView } from '../onboarding/OnboardingView';
 import { OpportunityDetailDrawer } from '../opportunity/OpportunityDetailDrawer';
 import { DiscoveryModal } from '../dashboard/DiscoveryModal';
+import { ActionPlannerView } from '../planner/ActionPlannerView';
+import { DashboardActionPlanWidget } from '../dashboard/DashboardActionPlanWidget';
 import { EmailDigestModal } from '../email/EmailDigestModal';
 import { ToastContainer } from '../ui/Toast';
 import { Bot } from 'lucide-react';
@@ -29,6 +30,7 @@ const KNOWN_ROUTES = [
   '/dashboard',
   '/discover',
   '/assistant',
+  '/planner',
   '/tracker',
   '/profile',
   '/settings',
@@ -38,7 +40,6 @@ export const AppShell: React.FC = () => {
   const {
     sidebarCollapsed,
     currentUser,
-    isProfileComplete,
     setIsHirelyCoreOpen,
     setActiveTab
   } = useApp();
@@ -54,6 +55,8 @@ export const AppShell: React.FC = () => {
       setActiveTab('discover');
     } else if (path === 'assistant') {
       setActiveTab('assistant');
+    } else if (path === 'planner') {
+      setActiveTab('planner');
     } else if (path === 'tracker') {
       setActiveTab('tracker');
     } else if (path === 'profile') {
@@ -71,11 +74,6 @@ export const AppShell: React.FC = () => {
     const normalizedPath = (location.pathname.replace(/\/+$/, '') || '/').toLowerCase();
     const isKnownRoute = KNOWN_ROUTES.includes(normalizedPath);
     return isKnownRoute ? <SignInView /> : <NotFoundView standalone />;
-  }
-
-  // First-time users must complete their own profile before seeing personalized content.
-  if (!isProfileComplete) {
-    return <OnboardingView />;
   }
 
   return (
@@ -124,6 +122,7 @@ export const AppShell: React.FC = () => {
               element={
                 <div className="space-y-6 w-full min-w-0">
                   <RecommendedFeed />
+                  <DashboardActionPlanWidget />
                   <div className="flex flex-col lg:flex-row gap-6 items-stretch w-full min-w-0">
                     <OpportunityRadar />
                     <KanbanBoard />
@@ -140,6 +139,7 @@ export const AppShell: React.FC = () => {
               element={
                 <div className="space-y-6 w-full min-w-0">
                   <RecommendedFeed />
+                  <DashboardActionPlanWidget />
                   <div className="flex flex-col lg:flex-row gap-6 items-stretch w-full min-w-0">
                     <OpportunityRadar />
                     <KanbanBoard />
@@ -160,6 +160,7 @@ export const AppShell: React.FC = () => {
                 </div>
               }
             />
+            <Route path="/planner" element={<ActionPlannerView />} />
             <Route
               path="/tracker"
               element={

@@ -11,7 +11,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { OpportunitySortOption } from '../../types/opportunity';
-import { matchesLocationScope, sortOpportunities, isTrustworthySource } from '../../utils/opportunityFilters';
+import { matchesLocationScope, sortOpportunities, isTrustworthySource, isDirectPostingUrl } from '../../utils/opportunityFilters';
 import { motion, AnimatePresence } from 'motion/react';
 
 const STATUS_PIPELINE = [
@@ -73,6 +73,7 @@ export const RecommendedFeed: React.FC = () => {
     if (!radarFilters.internships && opp.category === 'internship') return false;
     if (!matchesLocationScope(opp, locationScope)) return false;
     if (!isTrustworthySource(opp.url, opp.source)) return false;
+    if ((opp.category === 'job' || opp.category === 'internship') && !isDirectPostingUrl(opp.url)) return false;
     return true;
   });
 

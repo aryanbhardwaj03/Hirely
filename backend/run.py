@@ -7,12 +7,18 @@ backend_dir = Path(__file__).resolve().parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 import uvicorn
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("🚀 Starting Hirely AI Backend Server...")
-    print("📖 Swagger UI Docs: http://localhost:8000/docs")
-    print("⚡ Health Check:    http://localhost:8000/health")
+    print("[*] Starting Hirely AI Backend Server...")
+    print("[*] Swagger UI Docs: http://localhost:8000/docs")
+    print("[*] Health Check:    http://localhost:8000/health")
     print("=" * 60)
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

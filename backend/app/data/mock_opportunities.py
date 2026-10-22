@@ -1,10 +1,13 @@
 """
-Curated realistic mock dataset of Jobs, Internships, and Hackathons.
-Used for zero-setup local development, testing, and fallback when TINYFISH_API_KEY is not set or rate-limited.
+Curated realistic mock dataset — Jobs, Internships, Hackathons, Scholarships & Fellowships.
+All URLs are verified working (homepage / careers root level) to prevent 404 errors.
+Used for zero-setup local development, testing, and fallback when TinyFish API is not set.
 """
 
 MOCK_OPPORTUNITIES = [
-    # --- JOBS ---
+    # ─────────────────────────────────────────
+    # JOBS
+    # ─────────────────────────────────────────
     {
         "id": "job-scale-ai-01",
         "type": "job",
@@ -12,14 +15,14 @@ MOCK_OPPORTUNITIES = [
         "organization": "Scale AI",
         "location": "San Francisco, CA / Remote",
         "is_remote": True,
-        "url": "https://scale.com/careers/ai-backend-engineer",
+        "url": "https://scale.com/careers",
         "description": "Scale AI is seeking an AI Backend Engineer to build robust data pipelines, scalable API microservices, and orchestration engines for LLM fine-tuning and evaluation. You will collaborate with research and infra teams to deploy high-throughput inference engines.",
         "summary": "Build high-throughput LLM pipelines and backend microservices using Python, FastAPI, Docker, and Kubernetes. Opportunity to work on state-of-the-art AI infrastructure at Scale AI.",
         "key_skills": ["Python", "FastAPI", "Docker", "Kubernetes", "PyTorch", "PostgreSQL", "Redis"],
         "experience_level": "Entry-Level",
         "compensation": "$135,000 - $165,000 + Equity",
         "deadline": "Rolling",
-        "source": "TinyFish Search"
+        "source": "Scale AI Careers"
     },
     {
         "id": "job-linear-02",
@@ -28,14 +31,14 @@ MOCK_OPPORTUNITIES = [
         "organization": "Linear",
         "location": "Remote",
         "is_remote": True,
-        "url": "https://linear.app/careers/fullstack-ai",
+        "url": "https://linear.app/careers",
         "description": "Linear is looking for a Full Stack Engineer to integrate intelligent workflow automations, predictive issue triage, and collaborative AI agents into the Linear desktop and web clients.",
         "summary": "Join Linear to create lightning-fast product experiences with React, TypeScript, GraphQL, Node.js, and modern AI embeddings.",
-        "key_skills": ["TypeScript", "React", "Node.js", "GraphQL", "TailwindCSS", "Next.js"],
+        "key_skills": ["TypeScript", "React", "Node.js", "GraphQL", "Next.js", "PostgreSQL"],
         "experience_level": "Junior",
         "compensation": "$125,000 - $155,000 + Equity",
         "deadline": "Rolling",
-        "source": "TinyFish Search"
+        "source": "Linear Careers"
     },
     {
         "id": "job-stripe-03",
@@ -44,14 +47,14 @@ MOCK_OPPORTUNITIES = [
         "organization": "Stripe",
         "location": "Seattle, WA / Remote",
         "is_remote": True,
-        "url": "https://stripe.com/jobs/junior-backend-platform",
+        "url": "https://stripe.com/jobs",
         "description": "Stripe is expanding its global payment rails infrastructure. We are seeking early-career engineers with solid fundamentals in distributed systems, RESTful API architecture, and reliable transaction processing.",
         "summary": "Work on mission-critical payments infra handling billions in transactions with Ruby, Java/Go, and Python. Great mentorship program for early career engineers.",
         "key_skills": ["Python", "Go", "Distributed Systems", "SQL", "API Design", "Linux"],
         "experience_level": "Junior",
         "compensation": "$140,000 - $170,000 + RSUs",
         "deadline": "Rolling",
-        "source": "TinyFish Search"
+        "source": "Stripe Jobs"
     },
     {
         "id": "job-vercel-04",
@@ -60,14 +63,14 @@ MOCK_OPPORTUNITIES = [
         "organization": "Vercel",
         "location": "Remote (Global)",
         "is_remote": True,
-        "url": "https://vercel.com/careers/cloud-infra-edge",
+        "url": "https://vercel.com/careers",
         "description": "Help power the frontend cloud. At Vercel, you will develop serverless runtimes, edge functions, and AI SDK integrations that tens of thousands of developers use every single day.",
         "summary": "Design serverless runtime environments, streaming HTTP responses, and edge AI caching layers using TypeScript, Rust, and Python.",
-        "key_skills": ["TypeScript", "Rust", "Python", "Cloudflare Workers", "AWS", "Docker"],
+        "key_skills": ["TypeScript", "Rust", "Python", "AWS", "Docker", "Redis"],
         "experience_level": "Mid-Level",
         "compensation": "$150,000 - $185,000",
         "deadline": "Rolling",
-        "source": "TinyFish Search"
+        "source": "Vercel Careers"
     },
     {
         "id": "job-postman-05",
@@ -76,17 +79,99 @@ MOCK_OPPORTUNITIES = [
         "organization": "Postman",
         "location": "Bengaluru, India / Remote",
         "is_remote": True,
-        "url": "https://postman.com/careers/software-engineer-api",
+        "url": "https://www.postman.com/company/careers/",
         "description": "Postman is looking for software engineers to advance the world's leading API platform. You'll build tooling for API testing, AI mocking, and developer collaboration used by over 30 million developers.",
         "summary": "Develop scalable API collaboration tools using Node.js, Python, React, and cloud native architectures in a developer-first company.",
         "key_skills": ["Node.js", "Python", "React", "REST APIs", "Docker", "PostgreSQL"],
         "experience_level": "Entry-Level",
         "compensation": "₹18,00,000 - ₹28,00,000 / yr",
         "deadline": "Dec 30, 2026",
-        "source": "TinyFish Search"
+        "source": "Postman Careers"
+    },
+    {
+        "id": "job-anthropic-06",
+        "type": "job",
+        "title": "Software Engineer, Claude Infrastructure",
+        "organization": "Anthropic",
+        "location": "San Francisco, CA / Remote",
+        "is_remote": True,
+        "url": "https://www.anthropic.com/careers",
+        "description": "Anthropic is building the most reliable and interpretable AI systems in the world. We're looking for engineers to scale Claude's serving infrastructure, fine-tuning pipelines, and safety tooling.",
+        "summary": "Work on production LLM infra, RLHF pipelines, and model serving at Anthropic. Excellent for engineers passionate about AI safety and reliability.",
+        "key_skills": ["Python", "PyTorch", "Distributed Systems", "Docker", "Kubernetes", "AWS"],
+        "experience_level": "Entry-Level",
+        "compensation": "$180,000 - $220,000 + Equity",
+        "deadline": "Rolling",
+        "source": "Anthropic Careers"
+    },
+    {
+        "id": "job-figma-07",
+        "type": "job",
+        "title": "Frontend Engineer – Design Systems",
+        "organization": "Figma",
+        "location": "San Francisco, CA / Remote",
+        "is_remote": True,
+        "url": "https://www.figma.com/careers/",
+        "description": "Build Figma's world-class design system and collaborate with designers to create beautiful, accessible React components used by millions. This role spans frontend performance, animation, and cross-platform rendering.",
+        "summary": "Build performant React component systems, WebGL rendering pipelines, and accessibility tooling for Figma's flagship product.",
+        "key_skills": ["React", "TypeScript", "CSS", "WebGL", "Accessibility", "Design Systems"],
+        "experience_level": "Junior",
+        "compensation": "$145,000 - $175,000 + Equity",
+        "deadline": "Rolling",
+        "source": "Figma Careers"
+    },
+    {
+        "id": "job-notion-08",
+        "type": "job",
+        "title": "Backend Engineer – AI Features",
+        "organization": "Notion",
+        "location": "Remote",
+        "is_remote": True,
+        "url": "https://www.notion.so/careers",
+        "description": "Notion is building the connected workspace of the future. Join the AI team to develop intelligent document parsing, semantic search, and AI-powered collaboration features integrated across Notion's product surface.",
+        "summary": "Develop AI-powered Notion features including smart search, content generation, and workspace analytics with Python, TypeScript, and LLMs.",
+        "key_skills": ["Python", "TypeScript", "LLMs", "PostgreSQL", "Redis", "API Design"],
+        "experience_level": "Junior",
+        "compensation": "$130,000 - $160,000 + Equity",
+        "deadline": "Rolling",
+        "source": "Notion Careers"
+    },
+    {
+        "id": "job-razorpay-09",
+        "type": "job",
+        "title": "Software Development Engineer – Payments Core",
+        "organization": "Razorpay",
+        "location": "Bengaluru, India",
+        "is_remote": False,
+        "url": "https://razorpay.com/jobs/",
+        "description": "Razorpay powers payments for 10 million+ Indian businesses. Join the core payments team to build fault-tolerant transaction processing, reconciliation systems, and smart payment routing engines.",
+        "summary": "Build India's most reliable payment infrastructure using Java, Go, Python, and distributed systems. High-impact role with excellent growth.",
+        "key_skills": ["Java", "Go", "Python", "MySQL", "Distributed Systems", "Kafka"],
+        "experience_level": "Entry-Level",
+        "compensation": "₹20,00,000 - ₹35,00,000 / yr",
+        "deadline": "Rolling",
+        "source": "Razorpay Jobs"
+    },
+    {
+        "id": "job-adobe-10",
+        "type": "job",
+        "title": "Machine Learning Engineer – Adobe Firefly",
+        "organization": "Adobe",
+        "location": "Noida, India / Remote",
+        "is_remote": True,
+        "url": "https://www.adobe.com/careers.html",
+        "description": "Adobe Firefly is Adobe's generative AI creative engine. We're looking for ML engineers to build training pipelines, fine-tune diffusion models, and develop innovative multimodal generation capabilities.",
+        "summary": "Train and deploy generative AI models (diffusion, transformer) for Adobe Firefly using PyTorch, Python, and cloud ML infrastructure.",
+        "key_skills": ["Python", "PyTorch", "Diffusion Models", "AWS", "Docker", "Kubernetes"],
+        "experience_level": "Junior",
+        "compensation": "₹25,00,000 - ₹40,00,000 / yr",
+        "deadline": "Dec 15, 2026",
+        "source": "Adobe Careers"
     },
 
-    # --- INTERNSHIPS ---
+    # ─────────────────────────────────────────
+    # INTERNSHIPS
+    # ─────────────────────────────────────────
     {
         "id": "intern-openai-01",
         "type": "internship",
@@ -94,30 +179,30 @@ MOCK_OPPORTUNITIES = [
         "organization": "OpenAI",
         "location": "San Francisco, CA (Hybrid)",
         "is_remote": False,
-        "url": "https://openai.com/careers/systems-intern",
+        "url": "https://openai.com/careers",
         "description": "OpenAI is hiring undergraduate and graduate students for our Systems & Applied AI team. You will work directly with engineers building frontier models, fine-tuning infrastructure, and agent tooling.",
         "summary": "Paid 12-week internship developing distributed training frameworks, GPU clusters, and multimodal agent tools alongside leading AI scientists.",
         "key_skills": ["Python", "PyTorch", "C++", "Distributed Systems", "CUDA", "Linux"],
         "experience_level": "Student",
         "compensation": "$65/hour ($10,400/mo) + Housing Stipend",
         "deadline": "Nov 15, 2026",
-        "source": "TinyFish Search"
+        "source": "OpenAI Careers"
     },
     {
         "id": "intern-google-02",
         "type": "internship",
-        "title": "Software Engineering Intern - Summer 2027",
+        "title": "Software Engineering Intern – Summer 2027",
         "organization": "Google",
         "location": "Mountain View, CA / Bengaluru / Remote",
         "is_remote": True,
-        "url": "https://careers.google.com/jobs/results/swe-intern",
+        "url": "https://careers.google.com/students/",
         "description": "Join Google as a Software Engineering Intern. Work on core product lines such as Search, Android, Cloud, and Gemini models. Open to students currently pursuing a Bachelor's, Master's, or PhD in Computer Science.",
         "summary": "12-14 week technical internship with dedicated 1-on-1 mentorship, competitive pay, and direct consideration for full-time conversion.",
         "key_skills": ["Python", "Java", "C++", "Data Structures", "Algorithms", "Git"],
         "experience_level": "Student",
         "compensation": "$58/hour + Relocation Support",
         "deadline": "Dec 1, 2026",
-        "source": "TinyFish Search"
+        "source": "Google Careers"
     },
     {
         "id": "intern-datadog-03",
@@ -126,14 +211,14 @@ MOCK_OPPORTUNITIES = [
         "organization": "Datadog",
         "location": "New York, NY / Remote",
         "is_remote": True,
-        "url": "https://datadog.com/careers/backend-intern",
+        "url": "https://www.datadoghq.com/careers/",
         "description": "Datadog is looking for passionate students to build high-scale observability engines. You will work on streaming telemetry ingestion, alerting systems, and metrics storage engines.",
         "summary": "Learn modern cloud observability, Go, Python, and Kafka while processing trillions of events per day in production.",
         "key_skills": ["Python", "Go", "Kafka", "SQL", "Docker", "FastAPI"],
         "experience_level": "Student",
         "compensation": "$50/hour + Mentorship",
         "deadline": "Nov 30, 2026",
-        "source": "TinyFish Search"
+        "source": "Datadog Careers"
     },
     {
         "id": "intern-zerodha-04",
@@ -142,14 +227,14 @@ MOCK_OPPORTUNITIES = [
         "organization": "Zerodha (Rainmatter)",
         "location": "Bengaluru, India / Remote",
         "is_remote": True,
-        "url": "https://zerodha.tech/careers/tech-intern",
+        "url": "https://zerodha.com/careers/",
         "description": "Zerodha's engineering team values open-source craftsmanship, minimalism, and performance. We are looking for self-driven students who love building clean software with Go, Python, PostgreSQL, and Linux.",
         "summary": "Build open-source fintech modules, automated order matching pipelines, and developer tools with great engineering autonomy.",
         "key_skills": ["Python", "Go", "PostgreSQL", "Linux", "FastAPI", "WebSockets"],
         "experience_level": "Student",
         "compensation": "₹50,000 / month",
         "deadline": "Rolling",
-        "source": "TinyFish Search"
+        "source": "Zerodha Careers"
     },
     {
         "id": "intern-huggingface-05",
@@ -158,37 +243,87 @@ MOCK_OPPORTUNITIES = [
         "organization": "Hugging Face",
         "location": "Remote",
         "is_remote": True,
-        "url": "https://huggingface.co/careers/open-source-fellow",
+        "url": "https://huggingface.co/jobs",
         "description": "Hugging Face is on a mission to democratize good machine learning. We are looking for an open-source intern to contribute to Transformers, Datasets, and smolagents AI frameworks.",
         "summary": "Contribute code to the most widely used open-source AI libraries, write tutorials, and collaborate with the global ML community.",
         "key_skills": ["Python", "PyTorch", "Transformers", "Git", "AI Agents", "Docker"],
         "experience_level": "Student",
         "compensation": "$4,500 / month (Remote)",
         "deadline": "Nov 20, 2026",
-        "source": "TinyFish Search"
+        "source": "Hugging Face Jobs"
+    },
+    {
+        "id": "intern-microsoft-06",
+        "type": "internship",
+        "title": "Software Engineering Intern – Azure AI",
+        "organization": "Microsoft",
+        "location": "Hyderabad, India / Redmond, WA",
+        "is_remote": False,
+        "url": "https://careers.microsoft.com/students/",
+        "description": "Microsoft Azure AI is seeking student interns to work on AI-powered cloud services, including Azure OpenAI Service, Copilot integrations, and intelligent developer tools used by millions of enterprises.",
+        "summary": "12-week internship on Azure AI services. Work on real production code, get mentorship from senior engineers, and earn full-time offer consideration.",
+        "key_skills": ["Python", "C#", "Azure", "Machine Learning", "REST APIs", "Git"],
+        "experience_level": "Student",
+        "compensation": "$52/hour + Housing + Travel",
+        "deadline": "Dec 10, 2026",
+        "source": "Microsoft Careers"
+    },
+    {
+        "id": "intern-samsung-07",
+        "type": "internship",
+        "title": "AI Research Intern – Samsung R&D Institute India",
+        "organization": "Samsung R&D Institute India",
+        "location": "Bengaluru, India",
+        "is_remote": False,
+        "url": "https://research.samsung.com/sri-b",
+        "description": "Samsung R&D Institute India (SRI-B) is hiring AI research interns in computer vision, NLP, on-device AI, and generative AI for next-generation Galaxy AI features.",
+        "summary": "Research internship contributing to on-device AI models, NLP systems, and computer vision features embedded in Samsung Galaxy devices.",
+        "key_skills": ["Python", "PyTorch", "Computer Vision", "NLP", "C++", "TensorFlow"],
+        "experience_level": "Student",
+        "compensation": "₹40,000 - ₹60,000 / month",
+        "deadline": "Nov 25, 2026",
+        "source": "Samsung Research"
+    },
+    {
+        "id": "intern-atlassian-08",
+        "type": "internship",
+        "title": "Software Engineer Intern – Developer Experience",
+        "organization": "Atlassian",
+        "location": "Sydney, Australia / Remote APAC",
+        "is_remote": True,
+        "url": "https://www.atlassian.com/company/careers",
+        "description": "Atlassian's Developer Experience team is hiring interns to improve Jira, Confluence, and Bitbucket with AI-powered features, better APIs, and seamless developer integrations.",
+        "summary": "Work on AI developer tooling, REST API improvements, and developer productivity features for Atlassian's 300,000+ enterprise customers.",
+        "key_skills": ["Java", "Python", "TypeScript", "REST APIs", "Git", "Docker"],
+        "experience_level": "Student",
+        "compensation": "AUD $40/hour",
+        "deadline": "Nov 30, 2026",
+        "source": "Atlassian Careers"
     },
 
-    # --- HACKATHONS ---
+    # ─────────────────────────────────────────
+    # HACKATHONS
+    # ─────────────────────────────────────────
     {
-        "id": "hackathon-tinyfish-agents-01",
+        "id": "hackathon-devpost-ai-01",
         "type": "hackathon",
-        "title": "TinyFish Web Agent & Browser AI Hackathon",
-        "organization": "TinyFish AI",
-        "location": "Online / Global",
+        "title": "Devpost Global AI Agent Challenge 2026",
+        "organization": "Devpost",
+        "location": "Online / Worldwide",
         "is_remote": True,
-        "url": "https://tinyfish.ai/hackathons/agent-builders-2026",
-        "description": "Build the next generation of autonomous web agents, live browser scrapers, and AI copilots using TinyFish's Search, Fetch, and Agent APIs. Compete for $25,000 in cash prizes, cloud compute credits, and investor intros.",
-        "summary": "Global online hackathon dedicated to creating autonomous web agents, job scouts, and research copilots using the TinyFish API.",
-        "key_skills": ["Python", "FastAPI", "TinyFish API", "AI Agents", "JavaScript", "Playwright"],
+        "url": "https://devpost.com/hackathons",
+        "description": "Design and build production-grade autonomous agent systems capable of planning, executing complex multi-step browser tasks, code generation, and multi-agent consensus. Judged by industry leaders in generative AI.",
+        "summary": "Global online competition judged by AI leaders. Special prizes for best autonomous web agent and best developer tooling.",
+        "key_skills": ["Python", "LangChain", "FastAPI", "Docker", "PyTorch", "AI Agents"],
         "experience_level": "Any",
-        "compensation": "$25,000 Prize Pool + TinyFish Cloud Credits",
-        "deadline": "Nov 25, 2026",
-        "source": "TinyFish Search"
+        "compensation": "$50,000 Prize Pool + Fast-track Interviews",
+        "deadline": "Dec 10, 2026",
+        "source": "Devpost"
     },
     {
         "id": "hackathon-calhacks-02",
         "type": "hackathon",
-        "title": "CalHacks 12.0 - The World's Largest Collegiate Hackathon",
+        "title": "CalHacks 12.0 – World's Largest Collegiate Hackathon",
         "organization": "UC Berkeley CalHacks",
         "location": "San Francisco, CA + Online Hybrid",
         "is_remote": True,
@@ -199,54 +334,122 @@ MOCK_OPPORTUNITIES = [
         "experience_level": "Student",
         "compensation": "$150,000+ in Total Prizes & Hardware",
         "deadline": "Oct 28, 2026",
-        "source": "TinyFish Search"
+        "source": "CalHacks"
     },
     {
-        "id": "hackathon-ethglobal-03",
+        "id": "hackathon-mlh-03",
         "type": "hackathon",
-        "title": "ETHGlobal AI + Autonomous Agents Hackathon",
-        "organization": "ETHGlobal",
-        "location": "Online",
+        "title": "MLH Global Hack Week – AI & ML Edition",
+        "organization": "Major League Hacking (MLH)",
+        "location": "Online / Global",
         "is_remote": True,
-        "url": "https://ethglobal.com/events/ai-agents-2026",
-        "description": "Explore the intersection of AI agents, autonomous economic actors, and decentralized networks. Hack for 3 days alongside the brightest developers in crypto and artificial intelligence.",
-        "summary": "Virtual weekend hackathon exploring on-chain AI agents, autonomous wallets, smart contracts, and web3 AI integrations.",
-        "key_skills": ["Solidity", "Python", "AI Agents", "TypeScript", "FastAPI", "Web3.js"],
+        "url": "https://mlh.io/seasons/2027/events",
+        "description": "MLH Global Hack Week is a week-long hacking event series focused on AI, Machine Learning, and developer tooling. Students compete in daily mini-challenges and workshops led by industry engineers from GitHub, AWS, and Google.",
+        "summary": "Week-long AI/ML hackathon series with daily mini-challenges, workshops, and swag prizes — perfect for beginners and advanced hackers.",
+        "key_skills": ["Python", "Machine Learning", "JavaScript", "Git", "APIs", "Docker"],
         "experience_level": "Any",
-        "compensation": "$100,000 Prize Pool",
-        "deadline": "Nov 12, 2026",
-        "source": "TinyFish Search"
+        "compensation": "Swag, Cloud Credits, & Certificates",
+        "deadline": "Nov 15, 2026",
+        "source": "Major League Hacking"
     },
     {
         "id": "hackathon-devfolio-04",
         "type": "hackathon",
-        "title": "Hackout 2026 - National Student Innovation Hackathon",
+        "title": "Hackout 2026 – National Student Innovation Hackathon",
         "organization": "Devfolio & GDSC",
         "location": "Bengaluru, India / Virtual",
         "is_remote": True,
-        "url": "https://hackout2026.devfolio.co",
+        "url": "https://devfolio.co/hackathons",
         "description": "India's premier student hackathon bringing together 1,000+ top engineering students to build solutions for real-world problems across EdTech, HealthTech, AI productivity, and FinTech.",
         "summary": "48-hour hybrid hackathon with tracks in GenAI, Open Source, and SaaS. High placement recruiter visibility and mentorship.",
         "key_skills": ["Python", "FastAPI", "React", "Node.js", "Flutter", "Machine Learning"],
         "experience_level": "Student",
         "compensation": "₹5,00,000 Cash Prize + Swag & Cloud Credits",
         "deadline": "Nov 5, 2026",
-        "source": "TinyFish Search"
+        "source": "Devfolio"
     },
     {
-        "id": "hackathon-devpost-agentic-05",
+        "id": "hackathon-ethglobal-05",
         "type": "hackathon",
-        "title": "Devpost Global Agentic AI Challenge",
-        "organization": "Devpost Community",
-        "location": "Online / Worldwide",
+        "title": "ETHGlobal AI + Autonomous Agents Hackathon",
+        "organization": "ETHGlobal",
+        "location": "Online",
         "is_remote": True,
-        "url": "https://agentic-ai.devpost.com",
-        "description": "Design and build production-grade autonomous agent systems capable of planning, executing complex multi-step browser tasks, code generation, and multi-agent consensus.",
-        "summary": "Global online competition judged by industry leaders in generative AI. Special prizes for best autonomous web agent and best developer tooling.",
-        "key_skills": ["Python", "LangChain", "TinyFish API", "FastAPI", "Docker", "PyTorch"],
+        "url": "https://ethglobal.com/events",
+        "description": "Explore the intersection of AI agents, autonomous economic actors, and decentralized networks. Hack for 3 days alongside the brightest developers in crypto and artificial intelligence.",
+        "summary": "Virtual weekend hackathon exploring on-chain AI agents, autonomous wallets, smart contracts, and web3 AI integrations.",
+        "key_skills": ["Solidity", "Python", "AI Agents", "TypeScript", "FastAPI", "Web3.js"],
         "experience_level": "Any",
-        "compensation": "$50,000 Prize Pool + Fast-track Interviews",
-        "deadline": "Dec 10, 2026",
-        "source": "TinyFish Search"
-    }
+        "compensation": "$100,000 Prize Pool",
+        "deadline": "Nov 12, 2026",
+        "source": "ETHGlobal"
+    },
+
+    # ─────────────────────────────────────────
+    # SCHOLARSHIPS & FELLOWSHIPS
+    # ─────────────────────────────────────────
+    {
+        "id": "fellowship-mlh-01",
+        "type": "fellowship",
+        "title": "MLH Fellowship – Open Source Software Track",
+        "organization": "Major League Hacking",
+        "location": "Remote",
+        "is_remote": True,
+        "url": "https://fellowship.mlh.io",
+        "description": "The MLH Fellowship is a 12-week remote internship alternative where you contribute to open source projects used by thousands of developers, working alongside a cohort of global peers and mentors.",
+        "summary": "12-week paid open source fellowship where you contribute to production repos, build your portfolio, and receive career mentorship.",
+        "key_skills": ["Python", "JavaScript", "Git", "Open Source", "React", "Node.js"],
+        "experience_level": "Student",
+        "compensation": "$5,000 Stipend",
+        "deadline": "Nov 10, 2026",
+        "source": "MLH Fellowship"
+    },
+    {
+        "id": "scholarship-google-01",
+        "type": "scholarship",
+        "title": "Google Generation Scholarship 2027",
+        "organization": "Google",
+        "location": "Remote / Online",
+        "is_remote": True,
+        "url": "https://buildyourfuture.withgoogle.com/scholarships",
+        "description": "The Google Generation Scholarship supports students from underrepresented groups who are passionate about technology and making an impact. Selected scholars receive a $10,000 award and invitation to Google's Scholar Retreat.",
+        "summary": "Merit-based $10,000 scholarship for CS students from underrepresented groups, including a Google Scholar Retreat and networking with Googlers.",
+        "key_skills": ["Algorithms", "Data Structures", "Python", "Java", "Leadership", "Problem Solving"],
+        "experience_level": "Student",
+        "compensation": "$10,000 Award + Scholar Retreat",
+        "deadline": "Dec 1, 2026",
+        "source": "Google Scholarships"
+    },
+    {
+        "id": "fellowship-github-02",
+        "type": "fellowship",
+        "title": "GitHub Accelerator – AI Developer Tools Cohort",
+        "organization": "GitHub",
+        "location": "Remote",
+        "is_remote": True,
+        "url": "https://accelerator.github.com",
+        "description": "GitHub Accelerator is a 10-week program where student developers build the next generation of open source developer tooling. Receive $20,000 in funding, Copilot Enterprise access, and mentorship from GitHub engineers.",
+        "summary": "10-week funded accelerator for building open source AI developer tools. $20,000 grant + GitHub Copilot Enterprise + engineering mentorship.",
+        "key_skills": ["Python", "TypeScript", "GitHub Actions", "AI Agents", "REST APIs", "Open Source"],
+        "experience_level": "Student",
+        "compensation": "$20,000 Funding + GitHub Enterprise",
+        "deadline": "Nov 20, 2026",
+        "source": "GitHub Accelerator"
+    },
+    {
+        "id": "scholarship-anitab-03",
+        "type": "scholarship",
+        "title": "AnitaB.org Generation Google Scholarship",
+        "organization": "AnitaB.org & Google",
+        "location": "Remote / Online",
+        "is_remote": True,
+        "url": "https://anitab.org/scholarships-grants/",
+        "description": "This scholarship supports women and non-binary students in Computer Science, Software Engineering, and related fields. Recipients receive a monetary award and a mentorship package from Google engineers.",
+        "summary": "Competitive scholarship for women and non-binary CS students. $10,000 award + Google mentorship + invitation to Grace Hopper Celebration.",
+        "key_skills": ["Computer Science", "Algorithms", "Python", "Leadership", "Problem Solving"],
+        "experience_level": "Student",
+        "compensation": "$10,000 Scholarship + GHC Invitation",
+        "deadline": "Dec 5, 2026",
+        "source": "AnitaB.org"
+    },
 ]

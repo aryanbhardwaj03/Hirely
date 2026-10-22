@@ -270,23 +270,64 @@ class TinyFishClient:
         location: Optional[str] = None,
         limit: int = 15
     ) -> List[Dict[str, Any]]:
-        """Filters curated opportunities based on search criteria."""
+        """Filters curated opportunities based on search criteria. Always returns results."""
         results = list(MOCK_OPPORTUNITIES)
-        if query:
-            q_terms = [t.lower() for t in query.split() if len(t) > 2]
+
+        # Determine the primary type requested from query keywords
+        query_lower = (query or "").lower()
+        primary_type = None
+        if "internship" in query_lower or "intern" in query_lower:
+            primary_type = "internship"
+        elif "hackathon" in query_lower or "hack" in query_lower:
+            primary_type = "hackathon"
+        elif "scholarship" in query_lower or "fellowship" in query_lower:
+            primary_type = "scholarship" if "scholarship" in query_lower else "fellowship"
+        elif "job" in query_lower:
+            primary_type = "job"
+
+        if query and query.strip():
+            raw_terms = [t.lower().strip() for t in query.split() if len(t.strip()) >= 2]
+            # Include singular stems for plural query words (e.g. jobs -> job, internships -> internship)
+            expanded_terms = set(raw_terms)
+            for t in raw_terms:
+                if t.endswith("s") and len(t) > 3:
+                    expanded_terms.add(t[:-1])
+                elif t.endswith("es") and len(t) > 4:
+                    expanded_terms.add(t[:-2])
+            # Also add expanded tech/type synonyms
+            synonym_map = {
+                "intern": "internship",
+                "hack": "hackathon",
+                "job": "jobs",
+                "fellow": "fellowship",
+            }
+            for t in list(expanded_terms):
+                if t in synonym_map:
+                    expanded_terms.add(synonym_map[t])
+
             scored = []
             for item in results:
                 searchable_text = f"{item['title']} {item['organization']} {item['type']} {item['description']} {' '.join(item.get('key_skills', []))}".lower()
-                matches = sum(1 for term in q_terms if term in searchable_text)
+                matches = sum(1 for term in expanded_terms if term in searchable_text)
                 if matches > 0:
                     scored.append((matches, item))
+
             if scored:
                 scored.sort(key=lambda x: x[0], reverse=True)
                 results = [item for _, item in scored]
+            else:
+                # No direct text matches: if we can identify the type, return all of that type
+                # Otherwise return all items (better to show something than nothing)
+                if primary_type:
+                    type_filtered = [r for r in results if r.get("type") == primary_type]
+                    results = type_filtered if type_filtered else results
 
-        if location and location.lower() != "remote":
+        if location and location.lower() not in ["remote", "all", ""]:
             loc_term = location.lower()
-            results = [r for r in results if loc_term in r.get("location", "").lower() or r.get("is_remote")]
+            filtered = [r for r in results if loc_term in r.get("location", "").lower() or r.get("is_remote")]
+            if filtered:
+                results = filtered
+            # If no location matches, keep all results (don't return empty)
 
         return results[:limit]
 
@@ -303,7 +344,7 @@ class TinyFishClient:
         for s in COMMON_SKILLS:
             if s.lower() in text_lower:
                 found.append(s)
-        return found if found else ["Software Engineering", "Problem Solving"]
+        return found
 
 
 tinyfish_client = TinyFishClient()

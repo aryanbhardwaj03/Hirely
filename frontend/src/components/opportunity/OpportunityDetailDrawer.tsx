@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getOpportunitySummary, BackendSummaryResponse } from '../../services/api';
+import { TrustCheckBadge } from '../trustcheck/TrustCheckBadge';
+import { TrustCheckDrawerSection } from '../trustcheck/TrustCheckDrawerSection';
 
 export const OpportunityDetailDrawer: React.FC = () => {
   const { 
@@ -57,6 +59,7 @@ export const OpportunityDetailDrawer: React.FC = () => {
   const isSaved = isOpportunitySaved(selectedOpportunity.id);
   const currentApp = applications.find(a => a.opportunityId === selectedOpportunity.id);
   const currentStatus: ApplicationColumnId = currentApp ? currentApp.status : 'matched';
+  const isRolePosting = selectedOpportunity.category === 'job' || selectedOpportunity.category === 'internship';
 
   const handleFetchAiSummary = async () => {
     setLoadingSummary(true);
@@ -125,10 +128,15 @@ export const OpportunityDetailDrawer: React.FC = () => {
           {/* Drawer Header */}
           <div className="p-6 border-b border-white/[0.08] sticky top-0 bg-[#050A08]/95 backdrop-blur-xl z-20 flex items-start justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider bg-[#5DD62C]/15 border border-[#5DD62C]/30 text-[#5DD62C] font-semibold">
                   {selectedOpportunity.category}
                 </span>
+                <TrustCheckBadge 
+                  status={selectedOpportunity.trust_status || (selectedOpportunity.isSourceVerified ? 'verified' : 'unverified')} 
+                  score={selectedOpportunity.trust_score}
+                  showScore 
+                />
                 <span className="font-mono text-[11px] text-slate-300">
                   {selectedOpportunity.last_checked_at}
                 </span>
@@ -183,6 +191,9 @@ export const OpportunityDetailDrawer: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* Hirely TrustCheck Intelligence Section */}
+            <TrustCheckDrawerSection opportunity={selectedOpportunity} />
 
             {/* Key Metadata Grid */}
             <div className="grid grid-cols-2 gap-3 text-xs">
@@ -377,7 +388,7 @@ export const OpportunityDetailDrawer: React.FC = () => {
               rel="noopener noreferrer"
               className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#F8F8F8] text-[#0F0F0F] hover:bg-[#5DD62C] text-xs font-bold transition-all shadow-xl cursor-pointer"
             >
-              <span>Apply Official Portal</span>
+              <span>{isRolePosting ? 'Open exact job description' : 'Open official listing'}</span>
               <ExternalLink className="w-4 h-4" />
             </a>
           </div>
