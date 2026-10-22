@@ -10,20 +10,25 @@ import {
   Check, 
   RotateCcw,
   Radio,
-  ExternalLink
+  ExternalLink,
+  Send
 } from 'lucide-react';
 import { OpportunityCategory } from '../../types/opportunity';
+import { sendDigestEmail } from '../../services/email';
 
 export const SettingsView: React.FC = () => {
-  const { 
-    emailConfig, 
-    updateEmailConfig, 
-    setIsEmailPreviewOpen, 
+  const {
+    emailConfig,
+    updateEmailConfig,
+    setIsEmailPreviewOpen,
     backendHealth,
     fastapiHealth,
     profile,
-    showToast 
+    opportunities,
+    showToast
   } = useApp();
+
+  const [isSendingDigest, setIsSendingDigest] = useState(false);
 
   const [emailInput, setEmailInput] = useState(emailConfig.email);
   const [frequency, setFrequency] = useState(emailConfig.frequency);
@@ -168,12 +173,33 @@ export const SettingsView: React.FC = () => {
               </div>
             </label>
 
-            <button
-              onClick={handleSaveEmailConfig}
-              className="px-5 py-2.5 rounded-xl bg-white text-black hover:bg-slate-200 text-xs font-bold shadow-lg transition-all cursor-pointer"
-            >
-              Save Email Preferences
-            </button>
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <button
+                onClick={handleSaveEmailConfig}
+                className="px-5 py-2.5 rounded-xl bg-[#F8F8F8] text-[#0F0F0F] hover:bg-[#5DD62C] text-xs font-bold shadow-lg transition-all cursor-pointer"
+              >
+                Save Email Preferences
+              </button>
+
+              <button
+                onClick={async () => {
+                  setIsSendingDigest(true);
+                  const result = await sendDigestEmail(
+                    emailConfig,
+                    opportunities.slice(0, 3),
+                    profile.email,
+                    profile.name
+                  );
+                  setIsSendingDigest(false);
+                  showToast(result.statusText, result.success ? 'success' : 'warning');
+                }}
+                disabled={isSendingDigest}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#202020] border border-[#5DD62C]/60 hover:border-[#5DD62C] hover:bg-[#5DD62C]/10 text-white text-xs font-bold shadow-lg transition-all cursor-pointer disabled:opacity-50"
+              >
+                <Send className="w-3.5 h-3.5 text-[#5DD62C]" />
+                <span>{isSendingDigest ? 'Dispatching...' : 'Send Test Digest'}</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -202,7 +228,7 @@ export const SettingsView: React.FC = () => {
                 API Base URL
               </span>
               <div className="font-mono text-slate-200 truncate font-medium">
-                {import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}
+                {import.meta.env.VITE_API_BASE_URL || window.location.origin}
               </div>
             </div>
 
@@ -221,9 +247,9 @@ export const SettingsView: React.FC = () => {
         {/* Workspace Cache & Reset */}
         <div className="rounded-2xl p-6 bg-white/[0.02] border border-white/[0.06] flex items-center justify-between">
           <div>
-            <h3 className="text-xs font-semibold text-white">Reset Local Workspace State</h3>
+            <h3 className="text-xs font-semibold text-white">Reset Workspace Data</h3>
             <p className="text-[11px] text-slate-400">
-              Clear saved opportunities and applications stored in your browser session.
+              Clear your saved opportunities and application data for this account.
             </p>
           </div>
           <button
@@ -231,7 +257,7 @@ export const SettingsView: React.FC = () => {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-rose-500/20 transition-colors cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Demo Data</span>
+            <span>Reset Workspace</span>
           </button>
         </div>
       </div>

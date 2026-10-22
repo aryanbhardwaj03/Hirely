@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     # TinyFish AI Credentials
     TINYFISH_API_KEY: str = ""
 
+    # Resend email API
+    RESEND_API_KEY: str = ""
+    RESEND_FROM_EMAIL: str = ""
+    RESEND_ENABLED: bool = True
+
     # Gemini / OpenAI API key for Hirely Core AI chat and secondary summarization
     GEMINI_API_KEY: str = os.environ.get("GEMINI_API_KEY", "")
     OPENAI_API_KEY: str = os.environ.get("OPENAI_API_KEY", "")
@@ -61,6 +66,7 @@ class Settings(BaseSettings):
     EMAILS_FROM_EMAIL: str = "notifications@hirely.ai"
     EMAILS_FROM_NAME: str = "Hirely AI"
     SEND_WELCOME_EMAIL_ON_SIGNUP: bool = True
+    FRONTEND_URL: str = "http://localhost:5173"
 
     model_config = SettingsConfigDict(
         env_file=[str(p) for p in env_candidates],

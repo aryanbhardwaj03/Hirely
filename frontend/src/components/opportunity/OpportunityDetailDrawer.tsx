@@ -31,6 +31,9 @@ export const OpportunityDetailDrawer: React.FC = () => {
     isOpportunitySaved,
     applications,
     updateApplicationStatus,
+    addToPipeline,
+    removeFromPipeline,
+    isOpportunityInPipeline,
     profile,
     setIsHirelyCoreOpen
   } = useApp();
@@ -325,34 +328,76 @@ export const OpportunityDetailDrawer: React.FC = () => {
             </div>
 
             {/* Pipeline Stage Control */}
-            <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-2.5">
-              <span className="text-xs font-semibold text-white">
-                Application Pipeline Stage
-              </span>
-              <div className="grid grid-cols-4 gap-1.5">
-                {(['matched', 'applied', 'in_review', 'offers'] as ApplicationColumnId[]).map((status) => {
-                  const isCurrent = currentStatus === status;
-                  const labels: Record<ApplicationColumnId, string> = {
-                    matched: 'Matched',
-                    applied: 'Applied',
-                    in_review: 'In Review',
-                    offers: 'Offers',
-                  };
-                  return (
-                    <button
-                      key={status}
-                      onClick={() => updateApplicationStatus(selectedOpportunity.id, status)}
-                      className={`py-1.5 px-2 rounded-lg text-xs font-mono capitalize transition-all cursor-pointer ${
-                        isCurrent
-                          ? 'bg-[#5DD62C] text-black font-bold shadow-md'
-                          : 'bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]'
-                      }`}
-                    >
-                      {labels[status]}
-                    </button>
-                  );
-                })}
+            <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-white uppercase tracking-wider">
+                  Application Pipeline Tracking
+                </span>
+                {currentApp && (
+                  <button
+                    onClick={() => removeFromPipeline(selectedOpportunity.id)}
+                    className="text-[11px] font-mono text-rose-400 hover:text-rose-300 underline cursor-pointer"
+                  >
+                    Remove from Pipeline
+                  </button>
+                )}
               </div>
+
+              {!currentApp ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-slate-300">
+                    Track this opportunity through your application lifecycle (Matched → Applied → In Review → Offers).
+                  </p>
+                  <button
+                    onClick={() => addToPipeline(selectedOpportunity.id)}
+                    className="w-full py-2.5 px-4 rounded-xl bg-[#5DD62C]/20 hover:bg-[#5DD62C]/30 border border-[#5DD62C]/50 text-[#5DD62C] font-semibold text-xs transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>Add to Application Pipeline (Matched)</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between text-xs text-slate-300">
+                    <span>Active Stage:</span>
+                    <span className="font-mono text-[#5DD62C] uppercase font-bold">
+                      {currentStatus}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {(['matched', 'applied', 'in_review', 'offers'] as ApplicationColumnId[]).map((status) => {
+                      const isCurrent = currentStatus === status;
+                      const labels: Record<ApplicationColumnId, string> = {
+                        matched: 'Matched',
+                        applied: 'Applied',
+                        in_review: 'In Review',
+                        offers: 'Offers',
+                      };
+                      return (
+                        <button
+                          key={status}
+                          onClick={() => updateApplicationStatus(selectedOpportunity.id, status)}
+                          className={`py-2 px-1.5 rounded-lg text-xs font-mono capitalize transition-all cursor-pointer text-center ${
+                            isCurrent
+                              ? 'bg-[#5DD62C] text-black font-bold shadow-md'
+                              : 'bg-white/[0.04] text-slate-300 hover:bg-white/[0.08] hover:text-white'
+                          }`}
+                        >
+                          {labels[status]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {currentStatus === 'matched' && (
+                    <button
+                      onClick={() => updateApplicationStatus(selectedOpportunity.id, 'applied')}
+                      className="w-full mt-1.5 py-1.5 px-3 rounded-lg bg-white/[0.05] hover:bg-[#5DD62C]/20 border border-[#5DD62C]/30 text-xs text-[#5DD62C] font-semibold transition-all cursor-pointer text-center"
+                    >
+                      ✓ Submitted Application? Mark as Applied
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

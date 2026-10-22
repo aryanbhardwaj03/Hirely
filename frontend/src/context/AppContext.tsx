@@ -11,10 +11,7 @@ import {
   AuthUser
 } from '../types/opportunity';
 import {
-  INITIAL_PROFILE,
-  INITIAL_OPPORTUNITIES,
-  INITIAL_APPLICATIONS,
-  INITIAL_EMAIL_CONFIG
+  INITIAL_OPPORTUNITIES
 } from '../data/opportunities';
 import {
   checkBackendHealth,
@@ -25,6 +22,8 @@ import { scheduleEmailNotification } from '../services/email';
 import {
   fetchBackendHealth,
   getBackendRecommendations,
+  saveOpportunityToTracker,
+  deleteTrackerItem,
   BackendHealth
 } from '../services/api';
 import {
@@ -32,6 +31,7 @@ import {
   logoutUser,
   getCurrentAuthToken
 } from '../services/firebase';
+import { ChatMessage } from '../services/geminiCore';
 
 export interface ToastMessage {
   id: string;
@@ -51,11 +51,16 @@ interface AppContextType {
   logout: () => Promise<void>;
   profile: StudentProfile;
   updateProfile: (updated: Partial<StudentProfile>) => void;
+  isProfileComplete: boolean;
   opportunities: Opportunity[];
   savedOpportunityIds: string[];
   toggleSaveOpportunity: (id: string) => void;
   isOpportunitySaved: (id: string) => boolean;
   applications: ApplicationItem[];
+  addToPipeline: (opportunityId: string) => void;
+  removeFromPipeline: (opportunityId: string) => void;
+  isOpportunityInPipeline: (opportunityId: string) => boolean;
+  getOpportunityPipelineStatus: (opportunityId: string) => ApplicationColumnId | null;
   updateApplicationStatus: (opportunityId: string, status: ApplicationColumnId) => void;
   emailConfig: EmailDigestConfig;
   updateEmailConfig: (updated: Partial<EmailDigestConfig>) => void;
@@ -95,6 +100,9 @@ interface AppContextType {
   setSidebarCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: (open: boolean) => void;
+  chatMessages: ChatMessage[];
+  setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
+  resetChatMessages: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -103,6 +111,55 @@ const STORAGE_KEY_PROFILE = 'hirely_profile_v1';
 const STORAGE_KEY_SAVED = 'hirely_saved_ids_v1';
 const STORAGE_KEY_APPLICATIONS = 'hirely_applications_v1';
 const STORAGE_KEY_EMAIL = 'hirely_email_config_v1';
+const STORAGE_KEY_CHAT_SESSION = 'hirely_chat_session_v1';
+
+const createBlankProfile = (user?: AuthUser | null): StudentProfile => ({
+  name: user?.displayName || '',
+  email: user?.email || '',
+  degree: '',
+  fieldOfStudy: '',
+  year: 0,
+  university: '',
+  skills: [],
+  interests: [],
+  location: '',
+  preferredCategories: ['internship', 'scholarship', 'hackathon', 'fellowship'],
+  remotePreference: true,
+  emailDigest: true,
+  digestFrequency: 'daily',
+  deadlineAlerts: true,
+  profileCompletion: 0,
+});
+
+const createInitialChatMessage = (p?: StudentProfile | null): ChatMessage => ({
+  id: `init-msg`,
+  role: 'assistant',
+  content: `## Welcome to Hirely Core Intelligence\n\nI'm your dedicated AI opportunity advisor. I have indexed your profile (**${p?.name || 'Candidate'}**, **${p?.degree || 'Degree'}** in **${p?.fieldOfStudy || 'Computing'}**) and live verified opportunities.\n\n* **Ask me to analyze your match** for any opportunity in your feed.\n* **Discover missing skills** and get a personalized learning roadmap.\n* **Paste any job description or resume** to extract requirements and eligibility.\n\nHow can I help you accelerate your career search today?`,
+  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  modelUsed: 'gemini-3.8-flash',
+});
+
+const readUserStorage = <T,>(key: string, uid: string, fallback: T): T => {
+  try {
+    const stored = localStorage.getItem(`${key}:${uid}`);
+    return stored ? JSON.parse(stored) as T : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const readChatSession = (uid: string, profile: StudentProfile): ChatMessage[] => {
+  try {
+    const raw = sessionStorage.getItem(`${STORAGE_KEY_CHAT_SESSION}:${uid}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.warn('Could not read chat session:', e);
+  }
+  return [createInitialChatMessage(profile)];
+};
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeTab, setActiveTab] = useState<ActiveTabType>('dashboard');
@@ -116,50 +173,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Sorting and Filtering State
   const [sortBy, setSortBy] = useState<OpportunitySortOption>('newest');
-  const [locationScope, setLocationScope] = useState<LocationScope>('all');
+  const [locationScope, setLocationScope] = useState<LocationScope>('delhi_ncr');
 
-  // Profile State
-  const [profile, setProfile] = useState<StudentProfile>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY_PROFILE);
-      return stored ? JSON.parse(stored) : INITIAL_PROFILE;
-    } catch {
-      return INITIAL_PROFILE;
-    }
+  // Start blank. User-specific data is loaded only after Firebase identifies the account.
+  const [profile, setProfile] = useState<StudentProfile>(() => createBlankProfile());
+  const [savedOpportunityIds, setSavedOpportunityIds] = useState<string[]>([]);
+  const [applications, setApplications] = useState<ApplicationItem[]>([]);
+  const [emailConfig, setEmailConfig] = useState<EmailDigestConfig>({
+    email: '', enabled: true, frequency: 'daily',
+    categories: ['internship', 'scholarship', 'hackathon', 'fellowship'],
+    includeMatchReason: true, sendDeadlineAlerts: true,
+    lastSentAt: null, nextScheduledAt: new Date().toISOString(),
   });
 
-  // Opportunities State
+  // AI Chat Conversation Session Memory (isolated per authenticated user, persists across navigation & refresh)
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => [createInitialChatMessage()]);
+
+  // Opportunities are shared discovery data, not personal account data.
   const [opportunities, setOpportunities] = useState<Opportunity[]>(INITIAL_OPPORTUNITIES);
-
-  // Saved Opportunities IDs
-  const [savedOpportunityIds, setSavedOpportunityIds] = useState<string[]>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY_SAVED);
-      return stored ? JSON.parse(stored) : ['opp-1', 'opp-delhi-1', 'opp-3'];
-    } catch {
-      return ['opp-1', 'opp-delhi-1', 'opp-3'];
-    }
-  });
-
-  // Applications State
-  const [applications, setApplications] = useState<ApplicationItem[]>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY_APPLICATIONS);
-      return stored ? JSON.parse(stored) : INITIAL_APPLICATIONS;
-    } catch {
-      return INITIAL_APPLICATIONS;
-    }
-  });
-
-  // Email Config State
-  const [emailConfig, setEmailConfig] = useState<EmailDigestConfig>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY_EMAIL);
-      return stored ? JSON.parse(stored) : INITIAL_EMAIL_CONFIG;
-    } catch {
-      return INITIAL_EMAIL_CONFIG;
-    }
-  });
 
   // UI state
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
@@ -185,21 +216,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
-    }, 4000);
+    }, 4500);
   }, []);
 
   const removeToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  // Listen to Firebase / Demo auth state on startup
+  // Load each account's own data when Firebase auth changes. Never reuse demo profile data.
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user, token) => {
       setCurrentUser(user);
       setAuthToken(token);
-      if (user?.displayName && !profile.name) {
-        setProfile(prev => ({ ...prev, name: user.displayName || prev.name, email: user.email || prev.email }));
+      if (!user) {
+        setProfile(createBlankProfile());
+        setSavedOpportunityIds([]);
+        setApplications([]);
+        setEmailConfig({
+          email: '', enabled: true, frequency: 'daily',
+          categories: ['internship', 'scholarship', 'hackathon', 'fellowship'],
+          includeMatchReason: true, sendDeadlineAlerts: true,
+          lastSentAt: null, nextScheduledAt: new Date().toISOString(),
+        });
+        setChatMessages([createInitialChatMessage()]);
+        return;
       }
+      const uid = user.uid;
+      const loadedProfile = readUserStorage(STORAGE_KEY_PROFILE, uid, createBlankProfile(user));
+      if (!loadedProfile.email) loadedProfile.email = user.email || '';
+      if (!loadedProfile.name && user.displayName) loadedProfile.name = user.displayName;
+      setProfile(loadedProfile);
+      setSavedOpportunityIds(readUserStorage(STORAGE_KEY_SAVED, uid, []));
+      setApplications(readUserStorage(STORAGE_KEY_APPLICATIONS, uid, []));
+      setEmailConfig(readUserStorage(STORAGE_KEY_EMAIL, uid, {
+        email: user.email || '', enabled: true, frequency: 'daily',
+        categories: ['internship', 'scholarship', 'hackathon', 'fellowship'],
+        includeMatchReason: true, sendDeadlineAlerts: true,
+        lastSentAt: null, nextScheduledAt: new Date().toISOString(),
+      }));
+      // Restore isolated conversation memory for this authenticated user
+      const userChat = readChatSession(uid, loadedProfile);
+      setChatMessages(userChat);
     });
     return () => unsubscribe();
   }, []);
@@ -221,30 +278,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   }, []);
 
-  // Sync state to localStorage
+  // Persist personal data only under the authenticated Firebase UID.
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(profile));
-  }, [profile]);
+    if (currentUser) localStorage.setItem(`${STORAGE_KEY_PROFILE}:${currentUser.uid}`, JSON.stringify(profile));
+  }, [profile, currentUser]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_SAVED, JSON.stringify(savedOpportunityIds));
-  }, [savedOpportunityIds]);
+    if (currentUser) localStorage.setItem(`${STORAGE_KEY_SAVED}:${currentUser.uid}`, JSON.stringify(savedOpportunityIds));
+  }, [savedOpportunityIds, currentUser]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_APPLICATIONS, JSON.stringify(applications));
-  }, [applications]);
+    if (currentUser) localStorage.setItem(`${STORAGE_KEY_APPLICATIONS}:${currentUser.uid}`, JSON.stringify(applications));
+  }, [applications, currentUser]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_EMAIL, JSON.stringify(emailConfig));
-  }, [emailConfig]);
+    if (currentUser) localStorage.setItem(`${STORAGE_KEY_EMAIL}:${currentUser.uid}`, JSON.stringify(emailConfig));
+  }, [emailConfig, currentUser]);
 
-  // Logout handler
+  // Persist conversation memory in session storage keyed by authenticated user ID
+  useEffect(() => {
+    if (currentUser?.uid && chatMessages.length > 0) {
+      sessionStorage.setItem(`${STORAGE_KEY_CHAT_SESSION}:${currentUser.uid}`, JSON.stringify(chatMessages));
+    }
+  }, [chatMessages, currentUser]);
+
+  const isProfileComplete = Boolean(
+    profile.name.trim() && profile.university.trim() && profile.degree.trim() &&
+    profile.fieldOfStudy.trim() && profile.year >= 1 && profile.location.trim() &&
+    profile.skills.some(skill => skill.trim().length > 0)
+  );
+
+  // Logout handler - clears active user session conversation
   const logout = useCallback(async () => {
+    if (currentUser?.uid) {
+      sessionStorage.removeItem(`${STORAGE_KEY_CHAT_SESSION}:${currentUser.uid}`);
+    }
     await logoutUser();
     setCurrentUser(null);
     setAuthToken(null);
+    setChatMessages([createInitialChatMessage()]);
     showToast('Signed out of Hirely session.', 'info');
-  }, [showToast]);
+  }, [currentUser, showToast]);
+
+  // Reset conversation
+  const resetChatMessages = useCallback(() => {
+    const fresh = createInitialChatMessage(profile);
+    setChatMessages([fresh]);
+    if (currentUser?.uid) {
+      sessionStorage.setItem(`${STORAGE_KEY_CHAT_SESSION}:${currentUser.uid}`, JSON.stringify([fresh]));
+    }
+    showToast('Conversation reset.', 'info');
+  }, [currentUser, profile, showToast]);
 
   // Profile update
   const updateProfile = useCallback((updated: Partial<StudentProfile>) => {
@@ -279,6 +363,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return savedOpportunityIds.includes(id);
   }, [savedOpportunityIds]);
 
+  // Add to pipeline
+  const addToPipeline = useCallback((opportunityId: string) => {
+    const opp = opportunities.find(o => o.id === opportunityId);
+    if (!opp) return;
+
+    setApplications(prev => {
+      const existing = prev.find(a => a.opportunityId === opportunityId);
+      if (existing) {
+        showToast(`Already in your pipeline (Stage: ${existing.status.toUpperCase()})`, 'info');
+        return prev;
+      }
+      const newApp: ApplicationItem = {
+        id: `app-${Date.now()}-${opportunityId}`,
+        opportunityId,
+        status: 'matched',
+        updatedAt: new Date().toISOString(),
+        notes: `Added from verified listings.`
+      };
+      showToast(`Added "${opp.title.slice(0, 36)}..." to Pipeline under Matched.`, 'success');
+      return [newApp, ...prev];
+    });
+
+    // Sync to backend tracker
+    saveOpportunityToTracker({
+      user_id: 1,
+      opportunity_id: opp.id,
+      opportunity_title: opp.title,
+      organization: opp.organization,
+      opportunity_type: opp.category,
+      url: opp.url,
+      status: 'matched'
+    }).catch(() => {});
+  }, [opportunities, showToast]);
+
+  // Remove from pipeline
+  const removeFromPipeline = useCallback((opportunityId: string) => {
+    setApplications(prev => prev.filter(a => a.opportunityId !== opportunityId));
+    showToast('Removed from Application Pipeline.', 'info');
+  }, [showToast]);
+
+  // Check if opportunity is in pipeline
+  const isOpportunityInPipeline = useCallback((opportunityId: string) => {
+    return applications.some(a => a.opportunityId === opportunityId);
+  }, [applications]);
+
+  // Get opportunity pipeline status
+  const getOpportunityPipelineStatus = useCallback((opportunityId: string): ApplicationColumnId | null => {
+    const found = applications.find(a => a.opportunityId === opportunityId);
+    return found ? found.status : null;
+  }, [applications]);
+
   // Update application status
   const updateApplicationStatus = useCallback((opportunityId: string, status: ApplicationColumnId) => {
     setApplications(prev => {
@@ -287,33 +422,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (existing) {
         return prev.map(a => a.opportunityId === opportunityId ? { ...a, status, updatedAt: now } : a);
       } else {
-        return [...prev, {
-          id: `app-${Date.now()}`,
+        return [{
+          id: `app-${Date.now()}-${opportunityId}`,
           opportunityId,
           status,
           updatedAt: now,
-        }];
+        }, ...prev];
       }
     });
 
     const opp = opportunities.find(o => o.id === opportunityId);
+    const labels: Record<ApplicationColumnId, string> = {
+      matched: 'Moved to Matched',
+      applied: 'Moved to Applied · Application Recorded ✓',
+      in_review: 'Moved to In Review',
+      offers: 'Moved to Offers 🎉',
+    };
+    showToast(labels[status], status === 'offers' ? 'success' : 'info');
+
     if (status === 'applied') {
-      showToast('Confirmation email scheduled.', 'success');
       scheduleEmailNotification({
         email: profile.email,
         opportunityId,
         opportunityTitle: opp ? opp.title : 'Opportunity',
         deadline: opp ? opp.deadline : null,
         reminderType: 'applied_confirmation',
-      });
-    } else {
-      const labels: Record<ApplicationColumnId, string> = {
-        matched: 'Moved to Matched',
-        applied: 'Moved to Applied',
-        in_review: 'Moved to In Review',
-        offers: 'Moved to Offers 🎉',
-      };
-      showToast(labels[status], 'info');
+      }).catch(() => {});
     }
   }, [opportunities, profile.email, showToast]);
 
@@ -335,7 +469,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const rec = await getBackendRecommendations(profile);
         if (rec.opportunities.length > 0) {
           setOpportunities(rec.opportunities);
-          showToast(`Discovered ${rec.totalMatches} live opportunities via FastAPI & TinyFish.`, 'success');
+          showToast(`Discovered ${rec.totalMatches} live opportunities from verified web portals.`, 'success');
           return;
         }
       }
@@ -352,7 +486,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       showToast(
         res.source === 'live_backend'
           ? `Discovered ${res.totalDiscovered} live opportunities from backend.`
-          : `Discovery complete: 12 high-signal matches calibrated.`,
+          : `Discovery complete: 12 verified high-signal matches calibrated.`,
         'success'
       );
     } catch (err: unknown) {
@@ -377,11 +511,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     logout,
     profile,
     updateProfile,
+    isProfileComplete,
     opportunities,
     savedOpportunityIds,
     toggleSaveOpportunity,
     isOpportunitySaved,
     applications,
+    addToPipeline,
+    removeFromPipeline,
+    isOpportunityInPipeline,
+    getOpportunityPipelineStatus,
     updateApplicationStatus,
     emailConfig,
     updateEmailConfig,
@@ -413,6 +552,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSidebarCollapsed,
     isMobileMenuOpen,
     setIsMobileMenuOpen,
+    chatMessages,
+    setChatMessages,
+    resetChatMessages,
   }), [
     activeTab,
     currentUser,
@@ -420,11 +562,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     logout,
     profile,
     updateProfile,
+    isProfileComplete,
     opportunities,
     savedOpportunityIds,
     toggleSaveOpportunity,
     isOpportunitySaved,
     applications,
+    addToPipeline,
+    removeFromPipeline,
+    isOpportunityInPipeline,
+    getOpportunityPipelineStatus,
     updateApplicationStatus,
     emailConfig,
     updateEmailConfig,
@@ -446,6 +593,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     isHirelyCoreOpen,
     sidebarCollapsed,
     isMobileMenuOpen,
+    chatMessages,
+    resetChatMessages,
   ]);
 
   return (
