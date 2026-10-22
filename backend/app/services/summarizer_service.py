@@ -1,7 +1,7 @@
 import re
 import logging
 from typing import Optional, List, Dict, Any, Tuple
-from app.services.tinyfish_client import tinyfish_client
+from app.services.web_page_service import fetch_public_page_text
 from app.schemas.summary import SummaryResponse
 
 logger = logging.getLogger(__name__)
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class SummarizerService:
     """
     Service to fetch and summarize job, internship, and hackathon descriptions
-    using TinyFish AI web scraping and intelligent extraction.
+    using public job page extraction and Gemini summarization.
     """
 
     @classmethod
@@ -21,13 +21,10 @@ class SummarizerService:
         user_skills: Optional[List[str]] = None
     ) -> SummaryResponse:
         """
-        Fetches web page content using TinyFish Fetch API and returns a structured AI summary.
+        Fetches the public job page and returns a structured summary.
         """
-        logger.info(f"Fetching content for URL: {url} via TinyFish AI...")
-        content = await tinyfish_client.fetch_content(
-            url=url,
-            purpose="Extract job/internship/hackathon details, skills, compensation, and requirements"
-        )
+        logger.info("Fetching public opportunity page: %s", url)
+        content = await fetch_public_page_text(url)
 
         if not content:
             # Fallback placeholder if URL cannot be fetched
@@ -110,7 +107,7 @@ class SummarizerService:
             deadlines_or_dates=deadlines,
             why_it_matters=why_it_matters,
             application_tips=application_tips,
-            source="TinyFish AI Fetch & Agent Extractor"
+            source="Gemini AI summarization"
         )
 
     @classmethod

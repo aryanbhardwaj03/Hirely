@@ -42,7 +42,7 @@ class SendOpportunityEmailRequest(BaseModel):
     location: Optional[str] = Field(default=None, description="Preferred location")
     opportunities: Optional[List[Dict[str, Any]]] = Field(default=None, description="Explicit opportunities list to include")
     limit: int = Field(default=5, ge=1, le=20, description="Max opportunity recommendations to include")
-    use_tinyfish_live: bool = Field(default=True, description="Whether to query TinyFish live search for fresh opportunities")
+    use_live_search: bool = Field(default=True, description="Whether to query live AI search for fresh opportunities")
     opportunity_type: Optional[str] = Field(default=None, description="Optional filter: 'job', 'internship', or 'hackathon'")
     is_test: bool = Field(default=False, description="Flag indicating if this is an on-demand test digest preview")
 

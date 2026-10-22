@@ -67,7 +67,7 @@ export async function checkBackendHealth(): Promise<BackendHealthResponse> {
 }
 
 /**
- * Discovers opportunities via live FastAPI / TinyFish with bounded retries and graceful fallback.
+ * Discovers opportunities via live FastAPI / AI search with bounded retries and graceful fallback.
  */
 export async function discoverOpportunities(
   profile: StudentProfile,
@@ -76,7 +76,7 @@ export async function discoverOpportunities(
   signal?: AbortSignal
 ): Promise<DiscoverResponse> {
   const stages = [
-    { message: 'Initializing TinyFish autonomous web agents...', progress: 15 },
+    { message: 'Initializing AI-powered web search...', progress: 15 },
     { message: 'Discovering live scholarship portals & career boards in Delhi/NCR & Global...', progress: 40 },
     { message: 'Checking source qualification criteria & deadline validity...', progress: 65 },
     { message: 'Evaluating eligibility against student coursework & skills...', progress: 85 },
@@ -135,7 +135,7 @@ export async function discoverOpportunities(
           return {
             source: 'live_backend',
             opportunities: data.opportunities || INITIAL_OPPORTUNITIES,
-            activityLogs: data.activity || ['Live TinyFish agent query completed successfully.'],
+            activityLogs: data.activity || ['Live AI search agent query completed successfully.'],
             totalDiscovered: (data.opportunities || INITIAL_OPPORTUNITIES).length,
           };
         }
@@ -144,7 +144,7 @@ export async function discoverOpportunities(
         // Only re-throw if the outer user signal aborted (user cancelled)
         if (signal?.aborted) throw err;
         if (attempt === maxRetries) {
-          console.warn('[TinyFish] Backend unavailable; activating calibrated local fallback engine.');
+          console.warn('[AI search] Backend unavailable; activating calibrated local fallback engine.');
         }
       }
     }
@@ -172,7 +172,7 @@ export async function discoverOpportunities(
     return {
       ...opp,
       match_score: recalculatedScore,
-      last_checked_at: 'Just now via TinyFish Agent',
+      last_checked_at: 'Just now via AI search',
       isDemoFallback: true,
     };
   });

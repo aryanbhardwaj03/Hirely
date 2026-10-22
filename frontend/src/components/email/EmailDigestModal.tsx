@@ -88,7 +88,7 @@ export const EmailDigestModal: React.FC = () => {
                 HIRE<span className="text-[#5DD62C]">LY</span>
               </span>
               <p className="text-xs text-slate-300 font-serif italic">
-                Your Morning Opportunity Briefing · Curated by TinyFish
+                Your Morning Opportunity Briefing · Personalized for you
               </p>
             </div>
 
@@ -96,7 +96,7 @@ export const EmailDigestModal: React.FC = () => {
             <div className="bg-white/[0.03] p-4 rounded-xl border border-white/[0.08] text-xs text-slate-200 space-y-1.5">
               <p className="font-semibold text-white">Good morning {profile.name ? profile.name.split(' ')[0] : 'Candidate'},</p>
               <p className="text-slate-300 leading-relaxed">
-                TinyFish autonomous agents scanned verified university databases and tech programs overnight. Here are your {topOpps.length} highest-probability matches based on your {profile.degree || 'Engineering'} curriculum and declared skills:
+                Here are your {topOpps.length} strongest matches based on your {profile.degree || 'Engineering'} curriculum and declared skills:
               </p>
             </div>
 
@@ -150,7 +150,7 @@ export const EmailDigestModal: React.FC = () => {
             {/* Email Footer Note */}
             <div className="text-center pt-4 border-t border-white/[0.08] text-[11px] text-slate-400 space-y-1">
               <p>You are receiving this digest because you opted-in via HIRELY student intelligence workspace.</p>
-              <p className="font-mono text-[11px] text-slate-500">HIRELY Autonomous Agents · TinyFish API</p>
+              <p className="font-mono text-[11px] text-slate-500">HIRELY AI · Opportunity Discovery</p>
             </div>
           </div>
 

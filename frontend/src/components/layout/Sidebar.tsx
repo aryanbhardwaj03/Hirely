@@ -135,7 +135,7 @@ export const Sidebar: React.FC = () => {
             <div className="mx-4 mt-3 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-between text-xs text-slate-300">
               <span className="flex items-center gap-1.5 font-mono text-[11px] tracking-wide text-slate-200">
                 <Radio className="w-3.5 h-3.5 text-[#5DD62C] animate-pulse" />
-                TINYFISH AGENT
+                AI SEARCH
               </span>
               <span className="text-[11px] font-mono font-semibold text-[#5DD62C] bg-[#5DD62C]/10 px-2 py-0.5 rounded">
                 ONLINE

@@ -2,16 +2,21 @@ import express, { Request, Response } from 'express';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 import { INITIAL_OPPORTUNITIES } from './src/data/opportunities.js';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
+dotenv.config({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../backend/.env') });
+
 app.use(express.json());
 
 // Server-side Gemini AI for Hirely Core and AI Summarizer
 const geminiApiKey = process.env.GEMINI_API_KEY || '';
+const groqApiKey = process.env.GROQ_API_KEY || '';
 let aiClient: GoogleGenAI | null = null;
 if (geminiApiKey) {
   aiClient = new GoogleGenAI({ apiKey: geminiApiKey });
@@ -54,7 +59,7 @@ const BACKEND_EXTRA_OPPORTUNITIES: OpportunityItem[] = [
     experience_level: "Entry-Level",
     compensation: "$135,000 - $165,000 + Equity",
     deadline: "Rolling",
-    source: "TinyFish Search",
+    source: "AI Search",
     created_at: "2026-10-18T00:00:00Z"
   },
   {
@@ -71,7 +76,7 @@ const BACKEND_EXTRA_OPPORTUNITIES: OpportunityItem[] = [
     experience_level: "Junior",
     compensation: "$125,000 - $155,000 + Equity",
     deadline: "Rolling",
-    source: "TinyFish Search",
+    source: "AI Search",
     created_at: "2026-10-18T00:00:00Z"
   },
   {
@@ -88,7 +93,7 @@ const BACKEND_EXTRA_OPPORTUNITIES: OpportunityItem[] = [
     experience_level: "Junior",
     compensation: "$140,000 - $170,000 + RSUs",
     deadline: "Rolling",
-    source: "TinyFish Search",
+    source: "AI Search",
     created_at: "2026-10-18T00:00:00Z"
   },
   {
@@ -105,7 +110,7 @@ const BACKEND_EXTRA_OPPORTUNITIES: OpportunityItem[] = [
     experience_level: "Mid-Level",
     compensation: "$150,000 - $185,000",
     deadline: "Rolling",
-    source: "TinyFish Search",
+    source: "AI Search",
     created_at: "2026-10-18T00:00:00Z"
   },
   {
@@ -122,7 +127,7 @@ const BACKEND_EXTRA_OPPORTUNITIES: OpportunityItem[] = [
     experience_level: "Student",
     compensation: "$65/hour ($10,400/mo) + Housing Stipend",
     deadline: "Nov 15, 2026",
-    source: "TinyFish Search",
+    source: "AI Search",
     created_at: "2026-10-18T00:00:00Z"
   },
   {
@@ -139,24 +144,7 @@ const BACKEND_EXTRA_OPPORTUNITIES: OpportunityItem[] = [
     experience_level: "Student",
     compensation: "$58/hour + Relocation Support",
     deadline: "Dec 1, 2026",
-    source: "TinyFish Search",
-    created_at: "2026-10-18T00:00:00Z"
-  },
-  {
-    id: "hackathon-tinyfish-agents-01",
-    type: "hackathon",
-    title: "TinyFish Web Agent & Browser AI Hackathon",
-    organization: "TinyFish AI",
-    location: "Online / Global",
-    is_remote: true,
-    url: "https://tinyfish.ai/hackathons/agent-builders-2026",
-    description: "Build the next generation of autonomous web agents, live browser scrapers, and AI copilots using TinyFish's Search, Fetch, and Agent APIs.",
-    summary: "Global online hackathon dedicated to creating autonomous web agents, job scouts, and research copilots using the TinyFish API.",
-    key_skills: ["Python", "FastAPI", "TinyFish API", "AI Agents", "JavaScript", "Playwright"],
-    experience_level: "Any",
-    compensation: "$25,000 Prize Pool + TinyFish Cloud Credits",
-    deadline: "Nov 25, 2026",
-    source: "TinyFish Search",
+    source: "AI Search",
     created_at: "2026-10-18T00:00:00Z"
   },
   {
@@ -173,7 +161,7 @@ const BACKEND_EXTRA_OPPORTUNITIES: OpportunityItem[] = [
     experience_level: "Student",
     compensation: "$150,000+ in Total Prizes & Hardware",
     deadline: "Oct 28, 2026",
-    source: "TinyFish Search",
+    source: "AI Search",
     created_at: "2026-10-18T00:00:00Z"
   }
 ];
@@ -440,10 +428,11 @@ function calculateMatch(user: Partial<UserProfileData>, opp: OpportunityItem) {
 app.get('/health', (_req: Request, res: Response) => {
   res.json({
     status: 'healthy',
-    tinyfish_mode: 'Live API / AI Powered',
+    search_provider: 'Gemini Search with Groq fallback',
     smtp_mode: 'Automated Service',
     is_connected: true,
     gemini_configured: Boolean(geminiApiKey),
+    groq_configured: Boolean(groqApiKey),
     version: '1.0.0',
     timestamp: new Date().toISOString()
   });
@@ -452,10 +441,11 @@ app.get('/health', (_req: Request, res: Response) => {
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({
     status: 'healthy',
-    tinyfish_mode: 'Live API / AI Powered',
+    search_provider: 'Gemini Search with Groq fallback',
     smtp_mode: 'Automated Service',
     is_connected: true,
     gemini_configured: Boolean(geminiApiKey),
+    groq_configured: Boolean(groqApiKey),
     version: '1.0.0',
     timestamp: new Date().toISOString()
   });
@@ -624,7 +614,7 @@ app.post('/api/summary/url', async (req: Request, res: Response) => {
           opportunity_type: oppType,
           url,
           ...parsed,
-          source: 'TinyFish Agent & Gemini Intelligence'
+          source: 'Gemini AI Intelligence'
         });
       }
     } catch (e: any) {
@@ -658,7 +648,7 @@ app.post('/api/summary/url', async (req: Request, res: Response) => {
       'Tailor your resume to prominently highlight projects that use the required stack',
       'Include a working link to your live deployed applications or GitHub repositories'
     ],
-    source: 'TinyFish Autonomous Agent Extractor'
+    source: 'AI Search Extractor'
   });
 });
 
@@ -687,7 +677,7 @@ app.post('/api/summary/text', async (req: Request, res: Response) => {
     deadlines_or_dates: 'Rolling',
     why_it_matters: 'Provides valuable real-world development experience on production architectures.',
     application_tips: ['Focus on demonstrating problem solving agility and clear communication.'],
-    source: 'TinyFish Text Extractor'
+    source: 'AI search Text Extractor'
   });
 });
 
@@ -760,7 +750,7 @@ app.post('/api/profile/parse-resume', (req: Request, res: Response) => {
     'Node.js', 'TypeScript', 'JavaScript', 'Docker', 'Kubernetes', 'AWS',
     'GCP', 'Azure', 'PostgreSQL', 'MongoDB', 'Redis', 'SQL', 'Git',
     'GraphQL', 'TailwindCSS', 'PyTorch', 'TensorFlow', 'Scikit-Learn',
-    'AI Agents', 'LLMs', 'LangChain', 'TinyFish API', 'C++', 'Java', 'Go',
+    'AI Agents', 'LLMs', 'LangChain', 'AI search API', 'C++', 'Java', 'Go',
     'Rust', 'Solidity', 'Linux', 'CI/CD', 'WebSockets'
   ];
 
@@ -896,7 +886,7 @@ app.post('/api/discover', (req: Request, res: Response) => {
     return {
       ...opp,
       match_score: score,
-      last_checked_at: 'Discovered just now via TinyFish Agent',
+      last_checked_at: 'Discovered just now via AI search',
     };
   });
 
@@ -906,7 +896,7 @@ app.post('/api/discover', (req: Request, res: Response) => {
     source: 'live_backend',
     opportunities: matched,
     activity: [
-      `TinyFish Autonomous Agent initialized scanning for ${degree || 'Engineering'} (Year ${year || 2}).`,
+      `AI opportunity search initialized scanning for ${degree || 'Engineering'} (Year ${year || 2}).`,
       `Verified real-time qualification requirements across Delhi/NCR and Global hubs.`,
       `Computed semantic skill embeddings for ${userSkills.length} candidate competencies.`,
       `Calibrated ${matched.length} verified opportunities with 90%+ match fidelity.`

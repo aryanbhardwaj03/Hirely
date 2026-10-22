@@ -6,13 +6,13 @@ from app.schemas.summary import (
 )
 from app.services.summarizer_service import summarizer_service
 
-router = APIRouter(prefix="/summary", tags=["AI Summarization (TinyFish)"])
+router = APIRouter(prefix="/summary", tags=["AI Summarization (AI search)"])
 
 
 @router.post("/url", response_model=SummaryResponse)
 async def summarize_opportunity_url(payload: SummarizeUrlRequest):
     """
-    Fetches the live job, internship, or hackathon page using TinyFish Fetch API
+    Fetches the live job, internship, or hackathon page using Public page fetch API
     and generates an AI-powered structured summary.
     
     Includes:
@@ -39,14 +39,14 @@ async def summarize_opportunity_url(payload: SummarizeUrlRequest):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate summary with TinyFish AI: {str(e)}"
+            detail=f"Failed to generate summary with AI-powered search: {str(e)}"
         )
 
 
 @router.post("/text", response_model=SummaryResponse)
 async def summarize_opportunity_text(payload: SummarizeTextRequest):
     """
-    Summarizes raw job or hackathon text description using TinyFish extraction engine.
+    Summarizes raw job or hackathon text description using AI search extraction engine.
     """
     if not payload.text.strip():
         raise HTTPException(

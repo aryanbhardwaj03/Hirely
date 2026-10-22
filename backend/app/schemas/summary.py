@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class SummarizeUrlRequest(BaseModel):
-    url: str = Field(..., examples=["https://devpost.com/hackathons/tinyfish-agent-hackathon"])
+    url: str = Field(..., examples=["https://jobs.example.com/software-engineer"])
     opportunity_type: Optional[str] = Field(default="auto", examples=["hackathon"]) # job, internship, hackathon, auto
     user_skills: Optional[List[str]] = Field(default=None, examples=[["Python", "FastAPI", "React"]])
 
@@ -29,4 +29,4 @@ class SummaryResponse(BaseModel):
     deadlines_or_dates: Optional[str] = None
     why_it_matters: str
     application_tips: List[str]
-    source: str = "TinyFish AI"
+    source: str = "Gemini AI"

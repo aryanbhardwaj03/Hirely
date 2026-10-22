@@ -4,7 +4,7 @@ import { Sparkles, Radio, CheckCircle2, Loader2, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const STAGES = [
-  'Preparing your search & querying TinyFish autonomous agent network...',
+  'Preparing your search & querying live job sources...',
   'Discovering opportunities across live career portals & university feeds...',
   'Checking source pages, eligibility criteria & accreditation records...',
   'Evaluating coursework alignment against student curriculum & skills...',
@@ -45,7 +45,7 @@ export const DiscoveryModal: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-white tracking-wide uppercase">
-                  TinyFish Autonomous Discovery
+                  AI Opportunity Discovery
                 </h3>
                 <span className="text-[11px] font-mono text-[#00E676] font-medium">
                   LIVE WEB INTELLIGENCE AGENT

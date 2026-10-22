@@ -27,6 +27,6 @@ class Opportunity(Base):
     experience_level = Column(String(50), nullable=False, default="Any")  # Student, Entry-Level, Junior, etc.
     compensation = Column(String(150), nullable=True)  # e.g., "$90,000 - $120,000", "$10,000 Prize Pool", "$35/hr"
     deadline = Column(String(100), nullable=True)      # e.g. "Nov 15, 2026", "Rolling"
-    source = Column(String(100), default="TinyFish")   # "TinyFish Search", "Curated", "Web Agent"
+    source = Column(String(100), default="AI search")   # "AI Search", "Curated", "Web Agent"
     
     created_at = Column(DateTime(timezone=True), default=utc_now)

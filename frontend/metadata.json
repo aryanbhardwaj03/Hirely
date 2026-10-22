@@ -1,6 +1,6 @@
 {
   "name": "Hirely",
-  "description": "AI-powered opportunity intelligence platform for students with spatial UI, TinyFish live discovery, and Hirely Core Gemini AI.",
+  "description": "AI-powered opportunity intelligence platform for students with spatial UI, AI search live discovery, and Hirely Core Gemini AI.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,7 +1,7 @@
 """
 Curated realistic mock dataset — Jobs, Internships, Hackathons, Scholarships & Fellowships.
 All URLs are verified working (homepage / careers root level) to prevent 404 errors.
-Used for zero-setup local development, testing, and fallback when TinyFish API is not set.
+Used for zero-setup local development, testing, and fallback when AI search is not set.
 """
 
 MOCK_OPPORTUNITIES = [

@@ -22,15 +22,16 @@ for env_path in env_candidates:
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Hirely AI Backend"
-    PROJECT_DESCRIPTION: str = "AI-powered Job, Internship, and Hackathon discovery & summarization platform using TinyFish AI"
+    PROJECT_DESCRIPTION: str = "AI-powered job, internship, and hackathon discovery and recommendations"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api"
 
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./hirely.db"
 
-    # TinyFish AI Credentials
-    TINYFISH_API_KEY: str = ""
+    # Search and AI provider credentials. Keep keys in local environment variables.
+    GROQ_API_KEY: str = ""
+    GEMINI_API_KEY: str = ""
 
     # Resend email API
     RESEND_API_KEY: str = ""
@@ -38,7 +39,6 @@ class Settings(BaseSettings):
     RESEND_ENABLED: bool = True
 
     # Gemini / OpenAI API key for Hirely Core AI chat and secondary summarization
-    GEMINI_API_KEY: str = os.environ.get("GEMINI_API_KEY", "")
     OPENAI_API_KEY: str = os.environ.get("OPENAI_API_KEY", "")
 
     # CORS configuration for frontend clients (Next.js, Vite, React, etc.)
@@ -52,7 +52,7 @@ class Settings(BaseSettings):
         "*"
     ]
 
-    # Smart mock fallback when TINYFISH_API_KEY is not set or network fails
+    # Curated fallback when live search providers are unavailable.
     ENABLE_MOCK_FALLBACK: bool = True
 
     # SMTP Email Configuration

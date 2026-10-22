@@ -67,7 +67,7 @@ function generateLocalHirelyReasoning(
       `   - Containerize services with multi-stage **Docker** builds and lightweight health endpoints.\n\n` +
       `2. **Week 2 - AI Systems & Autonomous Agents**:\n` +
       `   - Integrate LLM function-calling (Gemini 2.5 / OpenAI) with structured Pydantic schema validation.\n` +
-      `   - Implement browser automation or retrieval-augmented search (e.g. TinyFish / vector embeddings).\n\n` +
+      `   - Implement browser automation or retrieval-augmented search (e.g. AI search / vector embeddings).\n\n` +
       `3. **Week 3 - Deployment & Public Evidence**:\n` +
       `   - Deploy live on Vercel/Fly.io and write a concise technical README with performance benchmarks.\n\n` +
       `*Your current verified skills (${topSkills}) give you an exceptional starting foundation!*`

@@ -21,7 +21,7 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localho
 
 export interface BackendHealth {
   status: 'healthy' | 'unavailable';
-  tinyfish_mode: string;
+  search_provider: string;
   is_connected: boolean;
 }
 
@@ -168,7 +168,7 @@ export function normalizeBackendOpportunity(
     workArrangement: item.is_remote
       ? 'Remote'
       : (item.location?.toLowerCase().includes('hybrid') ? 'Hybrid' : 'On-site'),
-    description: item.description || item.summary || 'Verified opportunity discovered via TinyFish autonomous web agents.',
+    description: item.description || item.summary || 'Verified opportunity discovered via AI-powered web search.',
     required_skills: item.key_skills && item.key_skills.length > 0 ? item.key_skills : ['Python', 'Problem Solving'],
     match_score: matchScore,
     match_reasons: matchResult?.match_reasons?.length
@@ -179,10 +179,10 @@ export function normalizeBackendOpportunity(
         ],
     missing_requirements: matchResult?.missing_skills?.length ? matchResult.missing_skills : [],
     eligibility_status: 'verified',
-    last_checked_at: 'Verified via TinyFish Web Agent',
+    last_checked_at: 'Verified through live search',
     postedDate: item.created_at || '2026-10-18',
     stipendOrAward: item.compensation || (category === 'hackathon' ? '$25,000 Prize Pool' : 'Competitive Stipend'),
-    source: item.source || 'TinyFish Live Agent',
+    source: item.source || 'Live Search',
     sourcePlatform: 'Verified Portal',
     isSourceVerified: true,
     isTopMatch: matchScore >= 96,
@@ -216,7 +216,7 @@ export async function fetchBackendHealth(): Promise<BackendHealth> {
         const data = await res.json();
         return {
           status: 'healthy',
-          tinyfish_mode: data.tinyfish_mode || 'Live API',
+          search_provider: data.search_provider || 'Live API',
           is_connected: true,
         };
       }
@@ -225,7 +225,7 @@ export async function fetchBackendHealth(): Promise<BackendHealth> {
     }
   }
 
-  return { status: 'unavailable', tinyfish_mode: 'Fallback Mock', is_connected: false };
+  return { status: 'unavailable', search_provider: 'Fallback Mock', is_connected: false };
 }
 
 /**
@@ -518,7 +518,7 @@ export async function getBackendRecommendations(
 }
 
 /**
- * 5. Opportunity URL Summaries (TinyFish Fetch + AI Summarization)
+ * 5. Opportunity URL Summaries (AI page summarization)
  */
 export async function getOpportunitySummary(
   url: string,
@@ -748,4 +748,3 @@ export async function deleteActionPlanTask(taskId: number): Promise<boolean> {
     return false;
   }
 }
-

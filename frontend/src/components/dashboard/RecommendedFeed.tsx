@@ -112,7 +112,7 @@ export const RecommendedFeed: React.FC = () => {
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 font-mono text-xs text-slate-300">
             <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#5DD62C]/10 border border-[#5DD62C]/30 text-[#5DD62C] text-[10px] sm:text-[11px] font-semibold tracking-wider uppercase">
               <span className="w-1.5 h-1.5 rounded-full bg-[#5DD62C] animate-pulse" />
-              <span>TinyFish · LIVE</span>
+              <span>AI SEARCH · LIVE</span>
             </div>
 
             <div className="flex items-center gap-2 overflow-hidden text-xs">

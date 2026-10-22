@@ -12,7 +12,6 @@ from app.models.planner import ActionPlan, ActionPlanTask
 from app.models.application import ApplicationTracker
 from app.services.matching_service import matching_service
 from app.services.trustcheck_service import trustcheck_service
-from app.services.tinyfish_client import tinyfish_client
 from app.data.mock_opportunities import MOCK_OPPORTUNITIES
 
 WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
@@ -109,7 +108,7 @@ class ActionPlannerService:
         total_available = sum(available_hours.values())
         total_net_capacity = sum(net_capacity.values())
 
-        # 3. Retrieve all candidate opportunities from database + TinyFish + curated catalog
+        # 3. Retrieve all candidate opportunities from database + AI search + curated catalog
         candidate_opps = await self._gather_candidate_opportunities(user, db)
 
         # 4. Filter expired listings and confirmed eligibility mismatches
@@ -230,7 +229,7 @@ class ActionPlannerService:
         return plan_dict
 
     async def _gather_candidate_opportunities(self, user: UserProfile, db: Optional[AsyncSession]) -> List[Dict[str, Any]]:
-        """Collects opportunities across DB, curated mock catalog, and TinyFish search."""
+        """Collects opportunities across the database and curated catalog."""
         all_opps = list(MOCK_OPPORTUNITIES)
         seen_ids = {o["id"] for o in all_opps}
 

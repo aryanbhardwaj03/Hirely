@@ -130,7 +130,7 @@ export async function sendDigestEmail(
       description: o.description,
       key_skills: o.required_skills
     })),
-    use_tinyfish_live: false,
+    use_live_search: false,
     limit: topOpportunities.length
   };
 

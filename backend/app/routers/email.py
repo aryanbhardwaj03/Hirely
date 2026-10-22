@@ -117,7 +117,7 @@ async def send_welcome_email(
 ):
     """
     Sends a personalized welcome email to the user with their profile summary
-    and an overview of Hirely's autonomous TinyFish matching features.
+    and an overview of Hirely's autonomous AI search matching features.
     """
     res = await db.execute(select(UserProfile).where(UserProfile.id == user_id))
     user = res.scalar_one_or_none()
@@ -144,7 +144,7 @@ async def send_welcome_email(
 async def send_opportunities_email(
     user_id: int,
     limit: int = Query(5, ge=1, le=20, description="Max opportunities to include in digest"),
-    use_tinyfish: bool = Query(True, description="Query TinyFish AI live search for real-time matches"),
+    use_live_search: bool = Query(True, description="Query live AI search for real-time matches"),
     opportunity_type: Optional[str] = Query(None, description="Optional type filter: job, internship, hackathon"),
     background_tasks: BackgroundTasks = None,
     async_mode: bool = Query(False, description="If True, dispatches in background"),
@@ -189,7 +189,7 @@ async def send_opportunities_email(
             email_service.send_opportunity_recommendations_email,
             user,
             opportunities=None,
-            use_tinyfish=use_tinyfish,
+            use_live_search=use_live_search,
             opportunity_type=opportunity_type,
             limit=limit,
             db_opportunities=db_opps
@@ -206,7 +206,7 @@ async def send_opportunities_email(
     return await email_service.send_opportunity_recommendations_email(
         user=user,
         opportunities=None,
-        use_tinyfish=use_tinyfish,
+        use_live_search=use_live_search,
         opportunity_type=opportunity_type,
         limit=limit,
         db_opportunities=db_opps
@@ -317,7 +317,7 @@ async def send_recommendations_by_request(
     return await email_service.send_opportunity_recommendations_email(
         user=user_obj,
         opportunities=normalized_opps,
-        use_tinyfish=data.use_tinyfish_live,
+        use_live_search=data.use_live_search,
         opportunity_type=data.opportunity_type,
         limit=data.limit,
         db_opportunities=db_opps,
@@ -328,7 +328,7 @@ async def send_recommendations_by_request(
 @router.post("/digest-all", response_model=EmailBatchResponse)
 async def send_digest_to_all_users(
     limit_per_user: int = Query(5, ge=1, le=10),
-    use_tinyfish: bool = Query(True),
+    use_live_search: bool = Query(True),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -366,7 +366,7 @@ async def send_digest_to_all_users(
         try:
             res = await email_service.send_opportunity_recommendations_email(
                 user=user,
-                use_tinyfish=use_tinyfish,
+                use_live_search=use_live_search,
                 limit=limit_per_user,
                 db_opportunities=db_opps,
                 is_test=False

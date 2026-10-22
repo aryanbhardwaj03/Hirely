@@ -234,7 +234,7 @@ export const SettingsView: React.FC = () => {
 
             <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-1">
               <span className="font-mono text-[11px] text-slate-400 uppercase">
-                TinyFish Web Agent Health
+                AI Search Provider Health
               </span>
               <div className="font-mono text-[#00E676] flex items-center gap-1.5 font-medium">
                 <Check className="w-3.5 h-3.5" />

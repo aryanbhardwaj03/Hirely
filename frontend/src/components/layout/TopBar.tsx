@@ -201,14 +201,14 @@ export const TopBar: React.FC = () => {
           </AnimatePresence>
         </div>
 
-        {/* Live TinyFish Telemetry Chip */}
+        {/* Live AI search Telemetry Chip */}
         <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#202020] border border-white/[0.08] text-xs shadow-sm">
           <div className="relative flex items-center justify-center">
             <div className="w-2 h-2 rounded-full bg-[#5DD62C]" />
             <div className="absolute w-3.5 h-3.5 rounded-full bg-[#5DD62C]/40 animate-ping" />
           </div>
           <span className="text-slate-300 font-mono text-[11px] tracking-wide">
-            TinyFish AI · <span className="text-[#5DD62C] font-semibold">FETCHING ACTIVE</span>
+            AI SEARCH · <span className="text-[#5DD62C] font-semibold">FETCHING ACTIVE</span>
           </span>
         </div>
 

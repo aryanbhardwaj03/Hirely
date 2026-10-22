@@ -11,7 +11,7 @@ class TrackerItemCreate(BaseModel):
     opportunity_type: str = Field(..., examples=["job"])  # job, internship, hackathon
     url: str = Field(..., examples=["https://scale.com/careers/ai-engineer"])
     status: str = Field(default="saved", examples=["saved"]) # saved, applied, interviewing, accepted, rejected
-    notes: Optional[str] = Field(default="", examples=["Need to highlight my TinyFish agent project in the cover letter."])
+    notes: Optional[str] = Field(default="", examples=["Need to highlight my AI search agent project in the cover letter."])
 
 
 class TrackerStatusUpdate(BaseModel):

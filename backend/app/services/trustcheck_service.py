@@ -11,7 +11,7 @@ from sqlalchemy import select, func
 from app.core.config import settings
 from app.models.trustcheck import TrustAssessment, ScamReport
 from app.models.opportunity import Opportunity
-from app.services.tinyfish_client import tinyfish_client
+from app.services.web_page_service import fetch_public_page_text
 from app.services.gemini_service import gemini_service
 from app.data.mock_opportunities import MOCK_OPPORTUNITIES
 
@@ -47,7 +47,7 @@ class TrustCheckService:
     Hirely TrustCheck Intelligence Engine:
     Performs empirical scam-risk assessments, organizer verification, domain cross-checks,
     and fee validation across jobs, internships, hackathons, and scholarships.
-    Synthesizes evidence using TinyFish Fetch + Gemini reasoning + deterministic rules.
+    Synthesizes evidence using Public page fetch + Gemini reasoning + deterministic rules.
     """
 
     async def assess_opportunity(
@@ -94,11 +94,8 @@ class TrustCheckService:
             )
             scam_reports_count = rep_res.scalar_one() or 0
 
-        # 3. Retrieve source content via TinyFish
-        fetched_content = await tinyfish_client.fetch_content(
-            url, 
-            purpose=f"Verification of organizer authenticity, fees, and safety for {title} by {organization}"
-        )
+        # 3. Retrieve public source content for verification.
+        fetched_content = await fetch_public_page_text(url)
 
         full_evidence_text = f"{title}\n{organization}\n{url}\n{description}\n{compensation}\n\nWebpage Evidence:\n{fetched_content or 'No external webpage content retrieved'}"
 

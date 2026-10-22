@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.models.user_profile import UserProfile
 from app.schemas.user_profile import UserProfileBase
 from app.schemas.email import EmailSendResponse
-from app.services.tinyfish_client import tinyfish_client
+from app.services.opportunity_search_service import opportunity_search_service
 from app.services.matching_service import matching_service
 from app.data.mock_opportunities import MOCK_OPPORTUNITIES
 
@@ -23,7 +23,7 @@ class EmailService:
     Email Service for Hirely AI:
     - Sends beautiful, responsive welcome emails on user onboarding.
     - Autonomously discovers and sends personalized job, internship, and hackathon
-      recommendations according to user skills, target role, and TinyFish live search.
+      recommendations according to user skills, target role, and live AI search.
     - Resend API as the primary transport when configured.
     - SMTP as an optional fallback transport.
     - Seamless simulation mode when no provider is configured.
@@ -295,7 +295,7 @@ class EmailService:
               </div>
               <h1 style="color:#ffffff;font-size:26px;font-weight:800;margin:0 0 10px 0;line-height:1.3;">Welcome aboard, {name}!</h1>
               <p style="color:#94a3b8;font-size:15px;line-height:1.6;margin:0;">
-                Your career & hackathon co-pilot is officially active. We use <strong>TinyFish AI Web Agents</strong> to autonomously scan, match, and curate the best opportunities tailored specifically for you.
+                Your career & hackathon co-pilot is officially active. We use <strong>Gemini and Groq search</strong> to autonomously scan, match, and curate the best opportunities tailored specifically for you.
               </p>
             </td>
           </tr>
@@ -337,7 +337,7 @@ class EmailService:
                     <div style="display:flex;align-items:flex-start;">
                       <div style="background-color:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px 12px;font-size:16px;margin-right:14px;">🌐</div>
                       <div>
-                        <strong style="color:#e2e8f0;font-size:14px;display:block;">Autonomous TinyFish Discovery</strong>
+                        <strong style="color:#e2e8f0;font-size:14px;display:block;">AI-powered opportunity discovery</strong>
                         <span style="color:#94a3b8;font-size:13px;line-height:1.5;">Our agents search real-time career pages, job boards, and hackathon platforms for newly published listings.</span>
                       </div>
                     </div>
@@ -398,7 +398,7 @@ class EmailService:
 Target Role: {target_role} | Experience: {experience} | Location: {locations_str}
 Skills: {", ".join(skills) if skills else "None listed"}
 
-Your AI Career Co-Pilot is active. We autonomously discover and match relevant jobs, internships, and hackathons using TinyFish AI Agents.
+Your AI Career Co-Pilot is active. We autonomously discover and match relevant jobs, internships, and hackathons using Gemini and Groq search.
 
 Explore your matched opportunities: {settings.FRONTEND_URL}
 """
@@ -577,7 +577,7 @@ URL: {url}
                 Fresh Matches for {name}
               </h1>
               <p style="color:#94a3b8;font-size:14px;line-height:1.5;margin:0;">
-                Our <strong>TinyFish AI crawler</strong> identified <strong>{count}</strong> high-affinity opportunities matching your target role of <strong>{target_role}</strong> and core skills ({", ".join(skills[:3]) if skills else "software engineering"}).
+                Our <strong>AI search</strong> identified <strong>{count}</strong> high-affinity opportunities matching your target role of <strong>{target_role}</strong> and core skills ({", ".join(skills[:3]) if skills else "software engineering"}).
               </p>
             </td>
           </tr>
@@ -619,7 +619,7 @@ URL: {url}
 </html>"""
 
         text = f"""🎯 Fresh Opportunities for {name} ({target_role})
-Our TinyFish AI crawler discovered {count} high-scoring opportunities matching your skills:
+Our AI search discovered {count} high-scoring opportunities matching your skills:
 {cards_text}
 
 Visit your Hirely AI dashboard to view all active opportunities: {settings.FRONTEND_URL}"""
@@ -648,7 +648,7 @@ Visit your Hirely AI dashboard to view all active opportunities: {settings.FRONT
         self,
         user: UserProfile | UserProfileBase | Dict[str, Any],
         opportunities: Optional[List[Dict[str, Any]]] = None,
-        use_tinyfish: bool = True,
+        use_live_search: bool = True,
         opportunity_type: Optional[str] = None,
         limit: int = 5,
         db_opportunities: Optional[List[Dict[str, Any]]] = None,
@@ -656,7 +656,7 @@ Visit your Hirely AI dashboard to view all active opportunities: {settings.FRONT
     ) -> EmailSendResponse:
         """
         Discovers, matches, and sends an opportunity recommendation digest email
-        tailored to the user's profile using TinyFish and the matching engine.
+            tailored to the user's profile using live AI search and the matching engine.
         """
         to_email = getattr(user, "email", None) or (user.get("email") if isinstance(user, dict) else None)
         if not to_email:
@@ -676,22 +676,22 @@ Visit your Hirely AI dashboard to view all active opportunities: {settings.FRONT
             all_candidate_opps = list(MOCK_OPPORTUNITIES)
             seen_ids = {o["id"] for o in all_candidate_opps}
 
-            # 1. Use TinyFish AI live search tailored to user profile
-            if use_tinyfish:
+            # 1. Search live opportunities tailored to the user profile
+            if use_live_search:
                 query_skills = " ".join(skills[:3]) if skills else "developer"
                 search_query = f"{target_role} {query_skills}".strip()
                 try:
-                    tf_results = await tinyfish_client.search(
+                    live_results = await opportunity_search_service.search(
                         query=search_query,
                         purpose=f"Matching career and hackathon opportunities for a {target_role} specializing in {query_skills}",
                         limit=20
                     )
-                    for item in tf_results:
+                    for item in live_results:
                         if item["id"] not in seen_ids:
                             seen_ids.add(item["id"])
                             all_candidate_opps.append(item)
                 except Exception as e:
-                    logger.warning(f"TinyFish search failed during email recommendation generation: {e}")
+                    logger.warning(f"Live search failed during email recommendation generation: {e}")
 
             # 2. Add any additional database opportunities passed in
             if db_opportunities:

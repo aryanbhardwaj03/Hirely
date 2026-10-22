@@ -100,7 +100,7 @@ export const OpportunityDetailDrawer: React.FC = () => {
           'Tailor resume bullet points specifically to matched coursework projects',
           'Highlight GitHub repositories demonstrating clean modular code and readme documentation'
         ],
-        source: 'TinyFish AI Summarizer'
+        source: 'Gemini AI Summarizer'
       });
     }
   };
@@ -252,13 +252,13 @@ export const OpportunityDetailDrawer: React.FC = () => {
               </p>
             </div>
 
-            {/* TinyFish Deep AI Page Summarizer on Demand */}
+            {/* AI Page Summarizer on Demand */}
             <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Bot className="w-4 h-4 text-[#5DD62C]" />
                   <span className="text-xs font-semibold text-white uppercase tracking-wider">
-                    TinyFish Web Extractor & Summary
+                    AI Web Extractor & Summary
                   </span>
                 </div>
                 {!aiSummary && (

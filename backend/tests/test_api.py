@@ -154,9 +154,9 @@ async def test_summary_text_and_url():
 
         # Test URL Summary
         url_payload = {
-            "url": "https://tinyfish.ai/hackathons/agent-builders-2026",
+            "url": "https://devpost.com/hackathons/example-hackathon",
             "opportunity_type": "hackathon",
-            "user_skills": ["Python", "TinyFish API"]
+            "user_skills": ["Python", "Web Search"]
         }
         url_res = await client.post("/api/summary/url", json=url_payload)
         assert url_res.status_code == 200

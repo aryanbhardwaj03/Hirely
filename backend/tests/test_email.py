@@ -56,7 +56,7 @@ async def test_welcome_email_and_opportunity_email_flow():
             "bio": "AI Systems engineer specialized in autonomous agents and Python backend.",
             "target_role": "AI Backend Engineer",
             "experience_level": "Mid-Level",
-            "skills": ["Python", "FastAPI", "Docker", "PyTorch", "TinyFish API"],
+            "skills": ["Python", "FastAPI", "Docker", "PyTorch", "Web Search"],
             "preferred_locations": ["Remote", "Bengaluru"],
             "opportunity_types": ["job", "internship", "hackathon"],
             "interests": ["AI Agents", "Cloud Architecture"]
@@ -75,8 +75,8 @@ async def test_welcome_email_and_opportunity_email_flow():
         assert welcome_data["success"] is True
         assert "Sarah" in welcome_data["subject"] or "Welcome" in welcome_data["subject"]
 
-        # 3. Trigger opportunity recommendation email endpoint (TinyFish + Matching)
-        opp_res = await client.post(f"/api/email/opportunities/{user_id}?limit=4&use_tinyfish=true")
+        # 3. Trigger opportunity recommendation email endpoint (live search + matching)
+        opp_res = await client.post(f"/api/email/opportunities/{user_id}?limit=4&use_live_search=true")
         assert opp_res.status_code == 200
         opp_data = opp_res.json()
         assert opp_data["success"] is True
@@ -87,7 +87,7 @@ async def test_welcome_email_and_opportunity_email_flow():
         req_payload = {
             "user_id": user_id,
             "limit": 3,
-            "use_tinyfish_live": False,
+            "use_live_search": False,
             "opportunity_type": "job"
         }
         rec_res = await client.post("/api/email/send-recommendations", json=req_payload)
@@ -101,7 +101,7 @@ async def test_welcome_email_and_opportunity_email_flow():
 async def test_email_digest_all():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        res = await client.post("/api/email/digest-all?limit_per_user=2&use_tinyfish=false")
+        res = await client.post("/api/email/digest-all?limit_per_user=2&use_live_search=false")
         assert res.status_code == 200
         data = res.json()
         assert data["total"] >= 1
@@ -124,7 +124,7 @@ def test_email_template_builders():
     assert "Devin Coder" in html_w
     assert "Full Stack Engineer" in html_w
     assert "Python" in html_w
-    assert "TinyFish" in html_w
+    assert "AI-powered" in html_w
 
     # Test Opportunity Email Template
     opp_sample = [

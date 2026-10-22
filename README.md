@@ -22,7 +22,7 @@ Discover relevant opportunities, understand your fit, organize your applications
   <img src="https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React and Vite">
   <img src="https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI">
   <img src="https://img.shields.io/badge/AI-Gemini-4285F4?style=flat-square&logo=googlegemini&logoColor=white" alt="Gemini">
-  <img src="https://img.shields.io/badge/Discovery-TinyFish-5DD62C?style=flat-square" alt="TinyFish">
+  <img src="https://img.shields.io/badge/Discovery-Gemini%20%2B%20Groq-5DD62C?style=flat-square" alt="Gemini and Groq search">
   <img src="https://img.shields.io/badge/Cloud-Google%20Cloud%20Run-4285F4?style=flat-square&logo=googlecloud&logoColor=white" alt="Google Cloud Run">
 </p>
 
@@ -62,18 +62,9 @@ Built collaboratively by **Team Zenophile**, Hirely brings together AI-powered d
 
 *Feature availability can depend on valid environment configuration and the status of external integrations.*
 
-## TinyFish Integration
+## AI-Powered Opportunity Search
 
-TinyFish is integrated into Hirely's opportunity-discovery workflow to help the application gather job and career opportunity information from the web. Rather than treating discovery as a separate manual task, Hirely uses this integration as part of the broader flow: finding opportunities, evaluating their relevance to a candidate's profile, and organizing them in the user's workspace.
-
-In Hirely, TinyFish works alongside the rest of the stack:
-
-- **Opportunity discovery:** TinyFish supports the web-discovery side of the workflow.
-- **Personalized experience:** discovered opportunities can feed into Hirely's profile-aware matching and application-management experience.
-- **Connected AI workflow:** TinyFish complements Gemini-powered AI capabilities; the integrations serve different roles rather than being interchangeable.
-- **Backend integration:** the TinyFish credential is configured on the backend, with production secrets managed through Google Secret Manager.
-
-The exact discovery behavior depends on the backend implementation and configured TinyFish access. The API key is a private backend secret and should never be exposed in the frontend or committed to the repository.
+Hirely uses Gemini Search grounding to find live job and internship postings, then uses Groq Browser Search as a fallback when Gemini is unavailable. Results are checked for direct posting URLs and ranked against the candidate profile. Both API keys belong in backend environment configuration and must never be committed or exposed in frontend code.
 
 ## Product at a Glance
 
@@ -94,7 +85,8 @@ flowchart TD
     ES --> API[FastAPI Backend]
     FE -. Sign-in .-> FB[Firebase Authentication]
     API --> GEM[Google Gemini]
-    API --> TF[TinyFish]
+    API --> GEMSEARCH[Gemini Search grounding]
+    API -. fallback .-> GROQ[Groq Browser Search]
     API --> SMTP[SMTP Email Provider]
     API --> DB[(SQLite in /tmp)]
     ES -. Hosted on .-> CRF[Cloud Run: hirely]
@@ -106,7 +98,7 @@ flowchart TD
 
 - **Frontend:** React and Vite provide the application interface; an Express server serves the deployed frontend.
 - **Backend:** FastAPI exposes the application’s backend functionality and coordinates integrations.
-- **AI and discovery:** Gemini and TinyFish are configured for AI-powered and opportunity-discovery workflows.
+- **AI and discovery:** Gemini Search grounding is the primary live discovery provider; Groq Browser Search is the fallback.
 - **Authentication:** Firebase Authentication handles supported sign-in flows.
 - **Email:** SMTP configuration supports email functionality.
 - **Deployment:** Google Cloud Run hosts the frontend and backend as separate services. Google Cloud Buildpacks build both services from source; the deployment does not rely on a Dockerfile.
@@ -120,7 +112,7 @@ flowchart TD
 | Frontend serving | Express |
 | Backend API | Python, FastAPI |
 | AI | Google Gemini |
-| Opportunity discovery | TinyFish |
+| Opportunity discovery | Gemini Search grounding, Groq Browser Search |
 | Authentication | Firebase Authentication |
 | Email delivery | SMTP |
 | Hosting | Google Cloud Run |
@@ -237,7 +229,7 @@ Hirely relies on environment-based configuration so local development and produc
 Depending on the features you enable, configure the backend values expected by the codebase, including:
 
 - Gemini API credentials.
-- TinyFish API credentials.
+- Gemini and Groq API credentials.
 - SMTP host, port, username, password/app password, and sender settings.
 - Database connection or path.
 - Any other backend integration settings documented in the backend environment example.
@@ -311,7 +303,7 @@ Please avoid committing credentials, local databases, generated build output, or
 
 ## Acknowledgements
 
-Hirely is built with the help of the open-source ecosystem and the services it integrates with, including React, Vite, FastAPI, Firebase, Google Gemini, TinyFish, and Google Cloud Run.
+Hirely is built with the help of the open-source ecosystem and the services it integrates with, including React, Vite, FastAPI, Firebase, Google Gemini, Groq, and Google Cloud Run.
 
 ---
 

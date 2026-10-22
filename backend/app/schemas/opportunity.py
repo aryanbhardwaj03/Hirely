@@ -17,7 +17,7 @@ class OpportunityBase(BaseModel):
     experience_level: str = Field(default="Any", examples=["Junior"])
     compensation: Optional[str] = Field(default=None, examples=["$110,000 - $145,000"])
     deadline: Optional[str] = Field(default=None, examples=["Rolling"])
-    source: str = Field(default="TinyFish", examples=["TinyFish Search"])
+    source: str = Field(default="AI search", examples=["AI Search"])
     trust_status: Optional[str] = Field(default="unverified", examples=["verified", "suspicious", "unverified"])
     trust_score: Optional[int] = Field(default=50, examples=[85])
 

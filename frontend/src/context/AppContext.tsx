@@ -17,7 +17,7 @@ import {
   checkBackendHealth,
   discoverOpportunities,
   BackendHealthResponse
-} from '../services/tinyfish';
+} from '../services/discovery';
 import { scheduleEmailNotification } from '../services/email';
 import {
   fetchBackendHealth,

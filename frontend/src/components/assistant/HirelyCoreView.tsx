@@ -142,7 +142,7 @@ export const HirelyCoreView: React.FC<HirelyCoreViewProps> = ({ embedded = false
               </span>
             </div>
             <p className="text-xs text-slate-300">
-              Personalized career guidance grounded in verified TinyFish live web discoveries
+              Personalized career guidance informed by live job and internship discoveries
             </p>
           </div>
         </div>
@@ -305,7 +305,7 @@ export const HirelyCoreView: React.FC<HirelyCoreViewProps> = ({ embedded = false
         </div>
         <div className="flex items-center justify-between text-[10px] font-mono text-slate-300 mt-1 px-1">
           <span>Press Enter to send, Shift+Enter for new line</span>
-          <span>Powered by Gemini 3.8 Flash & TinyFish</span>
+          <span>Powered by Gemini AI Search</span>
         </div>
       </div>
     </div>

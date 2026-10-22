@@ -58,7 +58,7 @@ export const TrustCheckDrawerSection: React.FC<TrustCheckDrawerSectionProps> = (
 
   const handleRecheck = async () => {
     setRechecking(true);
-    showToast('Executing fresh TinyFish web fetch & domain cross-check...', 'info');
+    showToast('Executing fresh AI search web fetch & domain cross-check...', 'info');
     const res = await recheckTrustAssessment(opportunity.id);
     setRechecking(false);
     if (res) {
@@ -73,7 +73,7 @@ export const TrustCheckDrawerSection: React.FC<TrustCheckDrawerSectionProps> = (
     return (
       <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.08] flex items-center justify-center gap-3 text-xs text-slate-400">
         <Loader2 className="w-4 h-4 animate-spin text-[#5DD62C]" />
-        <span>Authenticating sources via TinyFish & TrustCheck...</span>
+        <span>Authenticating sources via AI search & TrustCheck...</span>
       </div>
     );
   }

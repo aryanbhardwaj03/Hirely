@@ -116,7 +116,7 @@ def _parse_resume_text(text: str):
         "Node.js", "TypeScript", "JavaScript", "Docker", "Kubernetes", "AWS",
         "GCP", "Azure", "PostgreSQL", "MongoDB", "Redis", "SQL", "Git",
         "GraphQL", "TailwindCSS", "PyTorch", "TensorFlow", "Scikit-Learn",
-        "AI Agents", "LLMs", "LangChain", "TinyFish API", "C++", "Java", "Go",
+        "AI Agents", "LLMs", "LangChain", "AI search", "C++", "Java", "Go",
         "Rust", "Solidity", "Linux", "CI/CD", "WebSockets"
     ]
     found_skills = [s for s in SKILL_CATALOG if s.lower() in text_lower]

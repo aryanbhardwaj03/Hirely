@@ -91,7 +91,8 @@ async def root():
         "status": "online",
         "service": settings.PROJECT_NAME,
         "version": settings.VERSION,
-        "tinyfish_api_configured": bool(settings.TINYFISH_API_KEY),
+        "gemini_configured": bool(settings.GEMINI_API_KEY),
+        "groq_configured": bool(settings.GROQ_API_KEY),
         "smtp_configured": bool(settings.SMTP_USER and settings.SMTP_PASSWORD),
         "docs_url": "/docs",
         "endpoints": {
@@ -114,6 +115,6 @@ async def root():
 async def health_check():
     return {
         "status": "healthy",
-        "tinyfish_mode": "Live API" if settings.TINYFISH_API_KEY else "Smart Mock & Fallback",
+        "search_provider": "Gemini Search with Groq fallback" if (settings.GEMINI_API_KEY or settings.GROQ_API_KEY) else "Curated fallback",
         "smtp_mode": "Live SMTP" if (settings.SMTP_USER and settings.SMTP_PASSWORD) else "Smart Mock & Fallback"
     }

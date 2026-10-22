@@ -76,7 +76,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
           : 'border-[#337418]/60 hover:border-[#5DD62C] hover:shadow-[0_0_30px_rgba(93,214,44,0.14)]'
       } ${layout === 'horizontal' ? 'w-[84vw] sm:w-[320px] md:w-[340px] shrink-0 snap-start' : 'w-full'}`}
     >
-      {/* Top Header Row: Category Tag, TinyFish status, Match Pill, Save Icon */}
+      {/* Top Header Row: Category Tag, AI search status, Match Pill, Save Icon */}
       <div>
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-1.5 flex-wrap">

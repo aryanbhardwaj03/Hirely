@@ -7,12 +7,12 @@ from sqlalchemy import select
 from app.core.database import get_db
 from app.models.opportunity import Opportunity
 from app.data.mock_opportunities import MOCK_OPPORTUNITIES
-from app.services.tinyfish_client import tinyfish_client
+from app.services.opportunity_search_service import opportunity_search_service
 from app.services.job_links import is_direct_posting_url
 from app.services.matching_service import matching_service
 from app.schemas.user_profile import UserProfileBase
 
-router = APIRouter(prefix="/discover", tags=["Autonomous Discovery (TinyFish)"])
+router = APIRouter(prefix="/discover", tags=["AI Opportunity Discovery"])
 
 
 class DiscoverPayload(BaseModel):
@@ -48,7 +48,7 @@ async def run_autonomous_discovery(
     db: AsyncSession = Depends(get_db)
 ) -> Dict[str, Any]:
     """
-    Autonomous Discovery endpoint called by frontend TinyFish engine.
+    Autonomous Discovery endpoint called by frontend AI search engine.
     Scans live and curated web opportunities based on student degree, skills,
     location, and category interests.
     """
@@ -58,8 +58,8 @@ async def run_autonomous_discovery(
     query_terms = payload.skills[:3] if payload.skills else ["software", "developer"]
     search_q = " ".join(query_terms)
 
-    # 2. Search opportunities using TinyFish client
-    discovered_raw = await tinyfish_client.search(
+    # 2. Search opportunities using AI search client
+    discovered_raw = await opportunity_search_service.search(
         query=search_q,
         purpose=f"Autonomous career discovery for {payload.degree} student",
         location=payload.location,
@@ -148,15 +148,15 @@ async def run_autonomous_discovery(
             "match_reasons": r.get("match_reasons", ["Matches your declared coursework and technical skills"]),
             "missing_requirements": r.get("missing_skills", []),
             "eligibility_status": "verified",
-            "last_checked_at": "Just now via TinyFish Agent",
+            "last_checked_at": "Just now via AI search",
             "stipendOrAward": opp.get("compensation") or "Competitive Compensation",
-            "source": opp.get("source") or "TinyFish Live Discovery",
+            "source": opp.get("source") or "AI Live Discovery",
             "isSourceVerified": True,
             "isTopMatch": r.get("match_score", 0) >= 95
         })
 
     activity_logs = [
-        f"Initialized TinyFish autonomous query for skills: {', '.join(payload.skills[:3]) if payload.skills else 'Software Engineering'}.",
+        f"Initialized web search for skills: {', '.join(payload.skills[:3]) if payload.skills else 'Software Engineering'}.",
         f"Scanned {len(all_opps)} global and regional job, internship, and hackathon listings.",
         f"Calibrated eligibility for {payload.degree} students.",
         f"Synthesized match weights & ranked top {len(formatted_opportunities)} recommendations."

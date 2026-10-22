@@ -165,7 +165,7 @@ export const SignInView: React.FC = () => {
         <div className="space-y-1.5 py-1">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-xs text-slate-200">
             <Radio className="w-3.5 h-3.5 text-[#5DD62C] shrink-0 animate-pulse" />
-            <span className="truncate">TinyFish Live Web Agents & Real Opportunity Extraction</span>
+            <span className="truncate">AI-Powered Live Job Discovery</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-xs text-slate-200">
             <Sparkles className="w-3.5 h-3.5 text-[#5DD62C] shrink-0" />

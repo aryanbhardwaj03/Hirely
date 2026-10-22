@@ -8,7 +8,7 @@ from sqlalchemy import select
 from app.core.database import get_db
 from app.models.opportunity import Opportunity
 from app.schemas.opportunity import OpportunityResponse
-from app.services.tinyfish_client import tinyfish_client
+from app.services.opportunity_search_service import opportunity_search_service
 from app.services.job_links import is_direct_posting_url
 
 router = APIRouter(prefix="/search", tags=["Opportunity Search"])
@@ -81,7 +81,7 @@ async def search_all(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Primary search endpoint powered by TinyFish Search API.
+    Primary search endpoint powered by AI Search API.
     Searches live jobs, internships, and hackathons with seamless mock fallback.
     """
     norm_type = normalize_opportunity_type(opportunity_type)
@@ -90,8 +90,8 @@ async def search_all(
     if norm_type != "all":
         search_q = f"{search_q} {norm_type}".strip()
 
-    # Query TinyFish AI
-    results = await tinyfish_client.search(
+    # Query AI-powered search
+    results = await opportunity_search_service.search(
         query=search_q if search_q else "software engineer",
         purpose="Job and hackathon discovery for student and software developers",
         location=location,
@@ -105,7 +105,7 @@ async def search_all(
             results = type_filtered
         elif results:
             # If type filter removed all results, fetch mock data specifically for this type
-            results = tinyfish_client._filter_mock_data(query=norm_type, limit=limit)
+            results = await opportunity_search_service.search(query=norm_type, limit=limit)
             results = [r for r in results if normalize_opportunity_type(r.get("type")) == norm_type]
 
     # Filter remote

@@ -12,7 +12,7 @@ from app.schemas.opportunity import (
     OpportunityResponse
 )
 from app.schemas.user_profile import UserProfileBase
-from app.services.tinyfish_client import tinyfish_client
+from app.services.opportunity_search_service import opportunity_search_service
 from app.services.matching_service import matching_service
 from app.data.mock_opportunities import MOCK_OPPORTUNITIES
 from app.services.job_links import is_direct_posting_url
@@ -75,8 +75,8 @@ async def _generate_recommendations_for_user(
     top_skills_query = " ".join(skills[:3]) if skills else "developer"
     search_query = f"{target_role} {top_skills_query}".strip()
 
-    # Retrieve opportunities via TinyFish search
-    tinyfish_opps = await tinyfish_client.search(
+    # Retrieve opportunities via AI search
+    live_opps = await opportunity_search_service.search(
         query=search_query,
         purpose=f"Matching career and hackathon opportunities for a {target_role}",
         limit=30
@@ -86,7 +86,7 @@ async def _generate_recommendations_for_user(
     all_opps = list(MOCK_OPPORTUNITIES)
     seen_ids = {o["id"] for o in all_opps}
 
-    for item in tinyfish_opps:
+    for item in live_opps:
         if item["id"] not in seen_ids:
             seen_ids.add(item["id"])
             all_opps.append(item)
